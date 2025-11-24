@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Warehouse - Receive</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --primary: #0f172a;
+      --accent: #0ea5e9;
+      --text: #0b172b;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 16px 46px rgba(15, 23, 42, 0.12);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Space Grotesk', sans-serif;
+      background: linear-gradient(180deg, #f8fafc, #e0f2fe);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 18px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 12px;
+      z-index: 10;
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 18px;
+    }
+    .logo span {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #0f172a, #0ea5e9);
+      color: #fff;
+      font-weight: 800;
+    }
+    nav { display: flex; gap: 12px; align-items: center; }
+    nav a {
+      text-decoration: none;
+      color: var(--muted);
+      padding: 8px 12px;
+      border-radius: 12px;
+      transition: background 0.2s, color 0.2s;
+      font-weight: 600;
+    }
+    nav a.active, nav a:hover { background: #dbeafe; color: #0f172a; }
+    .layout {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 16px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    h2 { margin: 0 0 8px; }
+    p { margin: 0 0 8px; color: var(--muted); }
+    form { display: grid; gap: 12px; margin-top: 8px; }
+    label { font-weight: 600; font-size: 14px; color: var(--text); }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #f9fafb;
+      font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.12);
+    }
+    .btn {
+      padding: 13px 14px;
+      border-radius: 12px;
+      border: none;
+      background: #0ea5e9;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 12px 26px rgba(14, 165, 233, 0.22);
+      transition: transform 0.15s, background 0.2s;
+    }
+    .btn:hover { transform: translateY(-1px); background: #0284c7; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td {
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    th { color: var(--muted); }
+    .status {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #ecfeff;
+      color: #115e59;
+      border: 1px solid #99f6e4;
+      display: none;
+    }
+    @media (max-width: 960px) { .layout { grid-template-columns: 1fr; } }
+    .switch {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .switch:hover { background: #dbeafe; transform: translateY(-1px); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo"><span>WH</span>Receive</div>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a class="active" href="#">Receive</a>
+      <a href="update.html">Update</a>
+      <a href="transfer-request.html">Transfers</a>
+      <a href="reports.html">Reports</a>
+    </nav>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="logo" style="width:auto; padding:8px 12px; border-radius:12px; background:#e0f2fe; color:#0369a1; font-size:14px;">Dock 2</div>
+      <button class="switch" id="switchMode">Switch mode</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="card">
+      <h2>Receive goods</h2>
+      <p>Capture inbound items as they arrive at the dock.</p>
+      <form id="receiveForm">
+        <div>
+          <label for="product">Product</label>
+          <input id="product" type="text" placeholder="e.g., PRD-009 - LED Monitor" required>
+        </div>
+        <div>
+          <label for="quantity">Quantity</label>
+          <input id="quantity" type="number" min="1" value="10" required>
+        </div>
+        <div>
+          <label for="supplier">Supplier</label>
+          <input id="supplier" type="text" placeholder="BlueTech Supplies" required>
+        </div>
+        <div>
+          <label for="date">Date</label>
+          <input id="date" type="date" required>
+        </div>
+        <button class="btn" type="submit">Receive Goods</button>
+        <div class="status" id="status">Inbound recorded (demo only).</div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Recent receipts</h2>
+      <table>
+        <thead><tr><th>Ref</th><th>Product</th><th>Qty</th><th>Supplier</th></tr></thead>
+        <tbody id="recent">
+          <tr><td>RCV-2031</td><td>Thermal Paper</td><td>40</td><td>PaperWorks</td></tr>
+          <tr><td>RCV-2032</td><td>Wireless Mouse</td><td>80</td><td>North Supply</td></tr>
+          <tr><td>RCV-2033</td><td>Laptop Stand</td><td>22</td><td>PrimeLogix</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('receiveForm');
+    const status = document.getElementById('status');
+    const recent = document.getElementById('recent');
+    document.getElementById('date').valueAsDate = new Date();
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const product = document.getElementById('product').value;
+      const qty = document.getElementById('quantity').value;
+      const supplier = document.getElementById('supplier').value;
+      const ref = 'RCV-' + Math.floor(Math.random() * 9000 + 1000);
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${ref}</td><td>${product}</td><td>${qty}</td><td>${supplier}</td>`;
+      recent.prepend(row);
+      status.style.display = 'block';
+      status.textContent = `Received ${qty} of ${product}.`;
+      form.reset();
+      document.getElementById('date').valueAsDate = new Date();
+    });
+
+    document.getElementById('switchMode').addEventListener('click', () => {
+      window.location.href = '../frontend-pos/sell.html';
+    });
+  </script>
+</body>
+</html>

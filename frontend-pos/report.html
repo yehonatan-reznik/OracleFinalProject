@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POS - Reports</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --primary: #2563eb;
+      --accent: #10b981;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 16px 46px rgba(37, 99, 235, 0.08);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Space Grotesk', sans-serif;
+      background: linear-gradient(180deg, #f8fafc, #eef2ff);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 18px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 12px;
+      z-index: 10;
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 18px;
+    }
+    .logo span {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #1d4ed8, #22c55e);
+      color: #fff;
+      font-weight: 800;
+    }
+    nav { display: flex; gap: 12px; align-items: center; }
+    nav a {
+      text-decoration: none;
+      color: var(--muted);
+      padding: 8px 12px;
+      border-radius: 12px;
+      transition: background 0.2s, color 0.2s;
+      font-weight: 600;
+    }
+    nav a.active, nav a:hover { background: #e0e7ff; color: #1d4ed8; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    h2 { margin: 0 0 8px; }
+    p { margin: 0 0 8px; color: var(--muted); }
+    .stat { font-size: 28px; font-weight: 800; }
+    .trend {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      font-size: 13px;
+      color: #166534;
+      background: #ecfdf3;
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+    .switch {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .switch:hover { background: #e0e7ff; transform: translateY(-1px); }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td {
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    th { color: var(--muted); }
+    .placeholder {
+      height: 220px;
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      background: #f8fafc;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo"><span>POS</span>Reports</div>
+    <nav>
+      <a href="sell.html">Sell</a>
+      <a href="return.html">Returns</a>
+      <a href="check.html">Stock Check</a>
+      <a class="active" href="#">Reports</a>
+    </nav>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="trend">Today: +6.2%</div>
+      <button class="switch" id="switchMode">Switch mode</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Daily sales</h2>
+      <p>Sales performance for the current day</p>
+      <div class="stat">$7,420</div>
+      <div class="trend">↑ 8% vs yesterday</div>
+      <div class="placeholder">Sales chart placeholder</div>
+    </div>
+
+    <div class="card">
+      <h2>Returns</h2>
+      <p>Items processed for returns today</p>
+      <div class="stat">14</div>
+      <div class="trend" style="background:#fef2f2; color:#991b1b;">↓ 2% vs yesterday</div>
+      <div class="placeholder">Returns chart placeholder</div>
+    </div>
+
+    <div class="card">
+      <h2>Low stock list</h2>
+      <p>Products needing replenishment soon</p>
+      <table>
+        <thead>
+          <tr><th>Product</th><th>Qty</th><th>Branch</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>HD Webcam</td><td>9</td><td>Downtown</td></tr>
+          <tr><td>Receipt Paper</td><td>14</td><td>Midtown</td></tr>
+          <tr><td>USB-C Cable 1m</td><td>22</td><td>Uptown</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns: 2fr 1fr;">
+    <div class="card">
+      <h2>Transaction list</h2>
+      <p>Latest POS transactions by cashier</p>
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Cashier</th><th>Branch</th><th>Total</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>SAL-8301</td><td>A. Vega</td><td>Downtown</td><td>$120.90</td><td>Completed</td></tr>
+          <tr><td>SAL-8302</td><td>M. Chen</td><td>Midtown</td><td>$89.00</td><td>Completed</td></tr>
+          <tr><td>SAL-8303</td><td>K. Patel</td><td>Uptown</td><td>$65.00</td><td>Pending</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Returns summary</h2>
+      <p>Reasons logged today</p>
+      <table>
+        <thead><tr><th>Reason</th><th>Count</th></tr></thead>
+        <tbody>
+          <tr><td>Damaged</td><td>5</td></tr>
+          <tr><td>Wrong item</td><td>6</td></tr>
+          <tr><td>Changed mind</td><td>3</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('switchMode').addEventListener('click', () => {
+      window.location.href = '../frontend-warehouse/dashboard.html';
+    });
+  </script>
+</body>
+</html>

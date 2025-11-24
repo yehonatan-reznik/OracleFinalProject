@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Warehouse - Stock Count</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --primary: #0f172a;
+      --accent: #0ea5e9;
+      --text: #0b172b;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 16px 46px rgba(15, 23, 42, 0.12);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Space Grotesk', sans-serif;
+      background: linear-gradient(180deg, #f8fafc, #e0f2fe);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 18px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 12px;
+      z-index: 10;
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 18px;
+    }
+    .logo span {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #0f172a, #0ea5e9);
+      color: #fff;
+      font-weight: 800;
+    }
+    nav { display: flex; gap: 12px; align-items: center; }
+    nav a {
+      text-decoration: none;
+      color: var(--muted);
+      padding: 8px 12px;
+      border-radius: 12px;
+      transition: background 0.2s, color 0.2s;
+      font-weight: 600;
+    }
+    nav a.active, nav a:hover { background: #dbeafe; color: #0f172a; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      margin-top: 16px;
+    }
+    h2 { margin: 0 0 8px; }
+    p { margin: 0 0 8px; color: var(--muted); }
+    label { font-weight: 600; font-size: 14px; color: var(--text); }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #f9fafb;
+      font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.12);
+    }
+    .btn {
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: none;
+      background: #0ea5e9;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 12px 26px rgba(14, 165, 233, 0.22);
+      transition: transform 0.15s, background 0.2s;
+      margin-top: 10px;
+    }
+    .btn:hover { transform: translateY(-1px); background: #0284c7; }
+    .result {
+      margin-top: 12px;
+      display: grid;
+      gap: 10px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 12px;
+    }
+    .diff {
+      border: 1px dashed var(--border);
+      padding: 12px;
+      border-radius: 14px;
+      background: #f8fafc;
+    }
+    .switch {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .switch:hover { background: #dbeafe; transform: translateY(-1px); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo"><span>WH</span>Stock Count</div>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="receive.html">Receive</a>
+      <a href="update.html">Update</a>
+      <a class="active" href="#">Count</a>
+      <a href="reports.html">Reports</a>
+    </nav>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="pill">Cycle count</div>
+      <button class="switch" id="switchMode">Switch mode</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <h2>Submit count</h2>
+    <p>Select the product you counted and record the quantity.</p>
+    <div style="display:grid; gap:10px; max-width:520px;">
+      <div>
+        <label for="product">Product</label>
+        <select id="product">
+          <option value="PRD-001">PRD-001 - Wireless Mouse (Expected 24)</option>
+          <option value="PRD-002">PRD-002 - Mechanical Keyboard (Expected 12)</option>
+          <option value="PRD-003">PRD-003 - USB-C Cable 1m (Expected 78)</option>
+        </select>
+      </div>
+      <div>
+        <label for="count">Counted quantity</label>
+        <input id="count" type="number" min="0" value="0">
+      </div>
+      <button class="btn" id="submit">Submit Count</button>
+    </div>
+    <div class="result" id="result">
+      <div class="diff">Difference will appear here.</div>
+    </div>
+  </div>
+
+  <script>
+    const expected = { 'PRD-001': 24, 'PRD-002': 12, 'PRD-003': 78 };
+    const productSelect = document.getElementById('product');
+    const countInput = document.getElementById('count');
+    const result = document.getElementById('result');
+
+    document.getElementById('submit').addEventListener('click', () => {
+      const key = productSelect.value;
+      const counted = Number(countInput.value);
+      const diff = counted - expected[key];
+      const status = diff === 0 ? 'Matched expected quantity' : diff > 0 ? `Over by ${diff}` : `Short by ${Math.abs(diff)}`;
+      const color = diff === 0 ? '#ecfdf3' : diff > 0 ? '#e0f2fe' : '#fef2f2';
+      result.innerHTML = `
+        <div class="pill">Product ${key}</div>
+        <div class="diff" style="background:${color}">
+          <strong>${status}</strong><br>
+          <span style="color:var(--muted);">Counted ${counted}, expected ${expected[key]}</span>
+        </div>
+      `;
+    });
+
+    document.getElementById('switchMode').addEventListener('click', () => {
+      window.location.href = '../frontend-pos/sell.html';
+    });
+  </script>
+</body>
+</html>

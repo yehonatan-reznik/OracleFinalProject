@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POS - Sell</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --primary: #2563eb;
+      --accent: #10b981;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 16px 46px rgba(37, 99, 235, 0.08);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Space Grotesk', sans-serif;
+      background: radial-gradient(circle at 20% 20%, #eef2ff, #f8fafc 35%), var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 18px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 12px;
+      z-index: 10;
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 18px;
+    }
+    .logo span {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #1d4ed8, #22c55e);
+      color: #fff;
+      font-weight: 800;
+    }
+    nav { display: flex; gap: 12px; align-items: center; }
+    nav a {
+      text-decoration: none;
+      color: var(--muted);
+      padding: 8px 12px;
+      border-radius: 12px;
+      transition: background 0.2s, color 0.2s;
+      font-weight: 600;
+    }
+    nav a.active, nav a:hover { background: #e0e7ff; color: #1d4ed8; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: #ecfdf3;
+      color: #166534;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .switch {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .switch:hover { background: #e0e7ff; transform: translateY(-1px); }
+    .layout {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 18px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    h2 { margin: 0 0 8px; }
+    .muted { color: var(--muted); margin: 0 0 12px; }
+    .search-bar {
+      display: grid;
+      grid-template-columns: 1fr 220px 140px;
+      gap: 10px;
+      margin: 10px 0 16px;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #f9fafb;
+      font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+    th, td {
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    th { color: var(--muted); font-weight: 700; }
+    tr:hover td { background: #f8fafc; }
+    .qty {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f1f5f9;
+      border-radius: 12px;
+      padding: 4px 8px;
+    }
+    .qty button {
+      background: transparent;
+      border: none;
+      padding: 4px 6px;
+      cursor: pointer;
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 16px;
+    }
+    .qty input {
+      width: 44px;
+      padding: 6px;
+      text-align: center;
+      border: none;
+      background: transparent;
+      box-shadow: none;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      color: #fff;
+      background: var(--primary);
+      transition: transform 0.15s, background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25);
+    }
+    .btn.secondary {
+      background: #0ea5e9;
+      box-shadow: 0 10px 22px rgba(14, 165, 233, 0.2);
+    }
+    .btn.success { background: var(--accent); box-shadow: 0 10px 24px rgba(16, 185, 129, 0.25); }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .flex {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      background: #eef2ff;
+      color: #1d4ed8;
+      font-weight: 700;
+    }
+    .cart {
+      display: grid;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .cart-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .sidebar-list {
+      margin-top: 10px;
+      display: grid;
+      gap: 10px;
+      max-height: 430px;
+      overflow-y: auto;
+    }
+    .mini {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      background: #f9fafb;
+      display: grid;
+      gap: 4px;
+    }
+    .status {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #ecfdf3;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+      display: none;
+    }
+    @media (max-width: 1024px) {
+      .layout { grid-template-columns: 1fr; }
+      .search-bar { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo"><span>POS</span>Sell</div>
+    <nav>
+      <a class="active" href="#">Sell</a>
+      <a href="return.html">Returns</a>
+      <a href="check.html">Stock Check</a>
+      <a href="report.html">Reports</a>
+    </nav>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="tag">Branch: Downtown</div>
+      <button class="switch" id="switchMode">Switch mode</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="card">
+      <div class="flex">
+        <div>
+          <h2>Checkout</h2>
+          <p class="muted">Scan or search products to add to the cart</p>
+        </div>
+        <div class="badge">Shift: 08:00 - 16:00</div>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search" placeholder="Search product name or SKU">
+        <input type="text" id="barcode" placeholder="Barcode input">
+        <button class="btn secondary" id="addFromBarcode">Add barcode</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Category</th>
+            <th>Price</th>
+            <th>Qty</th>
+            <th>Add</th>
+          </tr>
+        </thead>
+        <tbody id="products"></tbody>
+      </table>
+      <div class="flex" style="margin-top: 14px;">
+        <div class="status" id="status">Added to cart.</div>
+        <div class="flex" style="gap: 8px;">
+          <button class="btn" id="complete">Complete Sale</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Cart & Stock</h2>
+      <p class="muted">Current cart and available stock per item</p>
+      <div class="cart" id="cart"></div>
+      <div class="sidebar-list" id="stockList"></div>
+    </div>
+  </div>
+
+  <script>
+    const sampleProducts = [
+      { id: 'PRD-001', name: 'Wireless Mouse', category: 'Accessories', price: 29.00, stock: 24 },
+      { id: 'PRD-002', name: 'Mechanical Keyboard', category: 'Accessories', price: 89.00, stock: 12 },
+      { id: 'PRD-003', name: 'USB-C Cable 1m', category: 'Cables', price: 12.00, stock: 78 },
+      { id: 'PRD-004', name: 'HD Webcam', category: 'Peripherals', price: 65.00, stock: 9 },
+      { id: 'PRD-005', name: 'Laptop Stand', category: 'Ergonomics', price: 39.00, stock: 18 }
+    ];
+    const cart = [];
+    const productsBody = document.getElementById('products');
+    const cartContainer = document.getElementById('cart');
+    const stockList = document.getElementById('stockList');
+    const search = document.getElementById('search');
+    const status = document.getElementById('status');
+
+    function renderProducts(list) {
+      productsBody.innerHTML = '';
+      list.forEach((p) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><strong>${p.name}</strong><br><small style="color: var(--muted)">${p.id}</small></td>
+          <td>${p.category}</td>
+          <td>$${p.price.toFixed(2)}</td>
+          <td>
+            <div class="qty">
+              <button data-dir="-1">-</button>
+              <input type="number" min="1" max="${p.stock}" value="1">
+              <button data-dir="1">+</button>
+            </div>
+          </td>
+          <td><button class="btn success" data-id="${p.id}">Add to cart</button></td>
+        `;
+        productsBody.appendChild(row);
+
+        const qtyInput = row.querySelector('input[type="number"]');
+        row.querySelectorAll('.qty button').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const dir = Number(btn.dataset.dir);
+            const next = Math.min(p.stock, Math.max(1, Number(qtyInput.value) + dir));
+            qtyInput.value = next;
+          });
+        });
+        row.querySelector('.btn.success').addEventListener('click', () => {
+          addToCart(p, Number(qtyInput.value));
+        });
+      });
+    }
+
+    function renderCart() {
+      cartContainer.innerHTML = '';
+      if (!cart.length) {
+        cartContainer.innerHTML = '<div class="mini">Cart is empty</div>';
+        return;
+      }
+      cart.forEach((item) => {
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML = `
+          <div>
+            <strong>${item.name}</strong>
+            <div style="color: var(--muted); font-size: 12px;">${item.qty} pcs • $${(item.price * item.qty).toFixed(2)}</div>
+          </div>
+          <span class="badge">In cart</span>
+        `;
+        cartContainer.appendChild(div);
+      });
+    }
+
+    function renderStock() {
+      stockList.innerHTML = '';
+      sampleProducts.forEach((p) => {
+        const div = document.createElement('div');
+        div.className = 'mini';
+        div.innerHTML = `
+          <div class="flex" style="gap:6px;">
+            <strong>${p.name}</strong>
+            <span class="badge">${p.category}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; color:var(--muted); font-size:13px;">
+            <span>ID: ${p.id}</span>
+            <span>Stock: <strong style="color:var(--text)">${p.stock}</strong></span>
+          </div>
+        `;
+        stockList.appendChild(div);
+      });
+    }
+
+    function addToCart(product, qty) {
+      const existing = cart.find((c) => c.id === product.id);
+      if (existing) {
+        existing.qty = Math.min(existing.qty + qty, product.stock);
+      } else {
+        cart.push({ ...product, qty });
+      }
+      status.style.display = 'block';
+      status.textContent = `${product.name} added.`;
+      renderCart();
+    }
+
+    search.addEventListener('input', () => {
+      const term = search.value.toLowerCase();
+      const filtered = sampleProducts.filter((p) => p.name.toLowerCase().includes(term) || p.id.toLowerCase().includes(term));
+      renderProducts(filtered);
+    });
+
+    document.getElementById('addFromBarcode').addEventListener('click', () => {
+      const code = document.getElementById('barcode').value.trim();
+      const found = sampleProducts.find((p) => p.id === code);
+      if (found) addToCart(found, 1);
+      status.style.display = 'block';
+      status.textContent = found ? `${code} scanned.` : 'Barcode not found in demo data.';
+    });
+
+    document.getElementById('complete').addEventListener('click', () => {
+      status.style.display = 'block';
+      status.textContent = cart.length ? 'Sale completed (demo only).' : 'Add items before completing.';
+    });
+
+    document.getElementById('switchMode').addEventListener('click', () => {
+      window.location.href = '../frontend-warehouse/dashboard.html';
+    });
+
+    renderProducts(sampleProducts);
+    renderCart();
+    renderStock();
+  </script>
+</body>
+</html>

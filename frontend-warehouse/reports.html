@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Warehouse - Reports</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --primary: #0f172a;
+      --accent: #0ea5e9;
+      --text: #0b172b;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 16px 46px rgba(15, 23, 42, 0.12);
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Space Grotesk', sans-serif;
+      background: linear-gradient(180deg, #f8fafc, #e0f2fe);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 18px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 12px;
+      z-index: 10;
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 18px;
+    }
+    .logo span {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #0f172a, #0ea5e9);
+      color: #fff;
+      font-weight: 800;
+    }
+    nav { display: flex; gap: 12px; align-items: center; }
+    nav a {
+      text-decoration: none;
+      color: var(--muted);
+      padding: 8px 12px;
+      border-radius: 12px;
+      transition: background 0.2s, color 0.2s;
+      font-weight: 600;
+    }
+    nav a.active, nav a:hover { background: #dbeafe; color: #0f172a; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      margin-top: 16px;
+    }
+    h2 { margin: 0 0 8px; }
+    p { margin: 0 0 8px; color: var(--muted); }
+    .buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #e0f2fe;
+      color: #0369a1;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.2s;
+    }
+    .btn:hover { transform: translateY(-1px); background: #bae6fd; }
+    .placeholder {
+      height: 260px;
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      background: #f8fafc;
+      margin-top: 12px;
+    }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td {
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    th { color: var(--muted); }
+    .status {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #ecfeff;
+      color: #115e59;
+      border: 1px solid #99f6e4;
+      display: none;
+    }
+    .switch {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .switch:hover { background: #dbeafe; transform: translateY(-1px); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo"><span>WH</span>Reports</div>
+    <nav>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="receive.html">Receive</a>
+      <a href="update.html">Update</a>
+      <a href="transfer-request.html">Transfers</a>
+      <a class="active" href="#">Reports</a>
+    </nav>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="logo" style="width:auto; padding:8px 12px; border-radius:12px; background:#e0f2fe; color:#0369a1; font-size:14px;">Exports</div>
+      <button class="switch" id="switchMode">Switch mode</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <h2>Quick reports</h2>
+    <p>Generate standard warehouse reports.</p>
+    <div class="buttons">
+      <button class="btn" data-type="Received goods">Received goods</button>
+      <button class="btn" data-type="Stock discrepancies">Stock discrepancies</button>
+      <button class="btn" data-type="Transfers history">Transfers history</button>
+    </div>
+    <div class="placeholder" id="placeholder">Table placeholder</div>
+    <div class="status" id="status">Report ready (demo placeholder).</div>
+    <table>
+      <thead><tr><th>Ref</th><th>Title</th><th>Date</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>RPT-441</td><td>Received goods - Central</td><td>2025-11-24</td><td>Ready</td></tr>
+        <tr><td>RPT-442</td><td>Stock discrepancy - Midtown</td><td>2025-11-23</td><td>Ready</td></tr>
+        <tr><td>RPT-443</td><td>Transfers history - Q4</td><td>2025-11-22</td><td>Processing</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const placeholder = document.getElementById('placeholder');
+    const status = document.getElementById('status');
+    document.querySelectorAll('.btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        placeholder.textContent = `${btn.dataset.type} report placeholder`;
+        status.style.display = 'block';
+        status.textContent = `${btn.dataset.type} prepared (demo only).`;
+      });
+    });
+
+    document.getElementById('switchMode').addEventListener('click', () => {
+      window.location.href = '../frontend-pos/sell.html';
+    });
+  </script>
+</body>
+</html>
