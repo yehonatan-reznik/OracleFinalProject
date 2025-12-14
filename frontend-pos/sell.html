@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>POS - Sell</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
   <style>
     :root {
       --bg: #f6f8fb;
@@ -17,7 +19,11 @@
       --shadow: 0 16px 46px rgba(37, 99, 235, 0.08);
       --radius: 16px;
     }
-    * { box-sizing: border-box; }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       font-family: 'Space Grotesk', sans-serif;
@@ -26,6 +32,7 @@
       min-height: 100vh;
       padding: 18px;
     }
+
     header {
       display: flex;
       justify-content: space-between;
@@ -39,6 +46,7 @@
       top: 12px;
       z-index: 10;
     }
+
     .logo {
       display: inline-flex;
       align-items: center;
@@ -46,6 +54,7 @@
       font-weight: 800;
       font-size: 18px;
     }
+
     .logo span {
       width: 38px;
       height: 38px;
@@ -56,7 +65,13 @@
       color: #fff;
       font-weight: 800;
     }
-    nav { display: flex; gap: 12px; align-items: center; }
+
+    nav {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
     nav a {
       text-decoration: none;
       color: var(--muted);
@@ -65,7 +80,13 @@
       transition: background 0.2s, color 0.2s;
       font-weight: 600;
     }
-    nav a.active, nav a:hover { background: #e0e7ff; color: #1d4ed8; }
+
+    nav a.active,
+    nav a:hover {
+      background: #e0e7ff;
+      color: #1d4ed8;
+    }
+
     .tag {
       display: inline-flex;
       align-items: center;
@@ -77,6 +98,7 @@
       font-weight: 700;
       font-size: 13px;
     }
+
     .switch {
       padding: 10px 12px;
       border-radius: 12px;
@@ -87,13 +109,19 @@
       cursor: pointer;
       transition: background 0.2s, transform 0.15s;
     }
-    .switch:hover { background: #e0e7ff; transform: translateY(-1px); }
+
+    .switch:hover {
+      background: #e0e7ff;
+      transform: translateY(-1px);
+    }
+
     .layout {
       margin-top: 16px;
       display: grid;
       grid-template-columns: 2fr 1fr;
       gap: 18px;
     }
+
     .card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -101,15 +129,25 @@
       padding: 18px;
       box-shadow: var(--shadow);
     }
-    h2 { margin: 0 0 8px; }
-    .muted { color: var(--muted); margin: 0 0 12px; }
+
+    h2 {
+      margin: 0 0 8px;
+    }
+
+    .muted {
+      color: var(--muted);
+      margin: 0 0 12px;
+    }
+
     .search-bar {
       display: grid;
       grid-template-columns: 1fr 220px 140px;
       gap: 10px;
       margin: 10px 0 16px;
     }
-    input, select {
+
+    input,
+    select {
       width: 100%;
       padding: 12px 12px;
       border-radius: 12px;
@@ -118,21 +156,38 @@
       font-size: 14px;
       transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
     }
-    input:focus, select:focus {
+
+    input:focus,
+    select:focus {
       outline: none;
       border-color: var(--primary);
       background: #fff;
       box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
     }
-    table { width: 100%; border-collapse: collapse; margin-top: 6px; }
-    th, td {
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+    }
+
+    th,
+    td {
       text-align: left;
       padding: 10px 8px;
       border-bottom: 1px solid var(--border);
       font-size: 14px;
     }
-    th { color: var(--muted); font-weight: 700; }
-    tr:hover td { background: #f8fafc; }
+
+    th {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    tr:hover td {
+      background: #f8fafc;
+    }
+
     .qty {
       display: inline-flex;
       align-items: center;
@@ -141,6 +196,7 @@
       border-radius: 12px;
       padding: 4px 8px;
     }
+
     .qty button {
       background: transparent;
       border: none;
@@ -150,6 +206,7 @@
       font-weight: 800;
       font-size: 16px;
     }
+
     .qty input {
       width: 44px;
       padding: 6px;
@@ -158,6 +215,7 @@
       background: transparent;
       box-shadow: none;
     }
+
     .btn {
       display: inline-flex;
       align-items: center;
@@ -173,13 +231,25 @@
       transition: transform 0.15s, background 0.2s, box-shadow 0.2s;
       box-shadow: 0 10px 24px rgba(37, 99, 235, 0.25);
     }
+
     .btn.secondary {
       background: #0ea5e9;
       box-shadow: 0 10px 22px rgba(14, 165, 233, 0.2);
     }
-    .btn.success { background: var(--accent); box-shadow: 0 10px 24px rgba(16, 185, 129, 0.25); }
-    .btn:hover { transform: translateY(-1px); }
-    .btn:active { transform: translateY(0); }
+
+    .btn.success {
+      background: var(--accent);
+      box-shadow: 0 10px 24px rgba(16, 185, 129, 0.25);
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
     .flex {
       display: flex;
       align-items: center;
@@ -187,6 +257,7 @@
       gap: 12px;
       flex-wrap: wrap;
     }
+
     .badge {
       padding: 6px 10px;
       border-radius: 10px;
@@ -195,11 +266,13 @@
       color: #1d4ed8;
       font-weight: 700;
     }
+
     .cart {
       display: grid;
       gap: 12px;
       margin-top: 10px;
     }
+
     .cart-item {
       display: flex;
       align-items: center;
@@ -209,6 +282,7 @@
       border-radius: 12px;
       border: 1px solid var(--border);
     }
+
     .sidebar-list {
       margin-top: 10px;
       display: grid;
@@ -216,6 +290,7 @@
       max-height: 430px;
       overflow-y: auto;
     }
+
     .mini {
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -224,6 +299,7 @@
       display: grid;
       gap: 4px;
     }
+
     .status {
       margin-top: 10px;
       padding: 10px 12px;
@@ -233,12 +309,19 @@
       border: 1px solid #bbf7d0;
       display: none;
     }
+
     @media (max-width: 1024px) {
-      .layout { grid-template-columns: 1fr; }
-      .search-bar { grid-template-columns: 1fr; }
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .search-bar {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
+
 <body>
   <header>
     <div class="logo"><span>POS</span>Sell</div>
@@ -297,13 +380,14 @@
     </div>
   </div>
 
+  <script src="../frontend-common/config.js"></script>
   <script>
     const sampleProducts = [
-      { id: 'PRD-001', name: 'Wireless Mouse', category: 'Accessories', price: 29.00, stock: 24 },
-      { id: 'PRD-002', name: 'Mechanical Keyboard', category: 'Accessories', price: 89.00, stock: 12 },
-      { id: 'PRD-003', name: 'USB-C Cable 1m', category: 'Cables', price: 12.00, stock: 78 },
-      { id: 'PRD-004', name: 'HD Webcam', category: 'Peripherals', price: 65.00, stock: 9 },
-      { id: 'PRD-005', name: 'Laptop Stand', category: 'Ergonomics', price: 39.00, stock: 18 }
+      { product_sku: 'PRD-001', product_name: 'Wireless Mouse', category: 'Accessories', unit_price: 29.00, stock: 24 },
+      { product_sku: 'PRD-002', product_name: 'Mechanical Keyboard', category: 'Accessories', unit_price: 89.00, stock: 12 },
+      { product_sku: 'PRD-003', product_name: 'USB-C Cable 1m', category: 'Cables', unit_price: 12.00, stock: 78 },
+      { product_sku: 'PRD-004', product_name: 'HD Webcam', category: 'Peripherals', unit_price: 65.00, stock: 9 },
+      { product_sku: 'PRD-005', product_name: 'Laptop Stand', category: 'Ergonomics', unit_price: 39.00, stock: 18 }
     ];
     const cart = [];
     const productsBody = document.getElementById('products');
@@ -317,9 +401,9 @@
       list.forEach((p) => {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td><strong>${p.name}</strong><br><small style="color: var(--muted)">${p.id}</small></td>
+          <td><strong>${p.product_name}</strong><br><small style="color: var(--muted)">${p.product_sku}</small></td>
           <td>${p.category}</td>
-          <td>$${p.price.toFixed(2)}</td>
+          <td>$${p.unit_price.toFixed(2)}</td>
           <td>
             <div class="qty">
               <button data-dir="-1">-</button>
@@ -327,7 +411,7 @@
               <button data-dir="1">+</button>
             </div>
           </td>
-          <td><button class="btn success" data-id="${p.id}">Add to cart</button></td>
+          <td><button class="btn success" data-sku="${p.product_sku}">Add to cart</button></td>
         `;
         productsBody.appendChild(row);
 
@@ -356,8 +440,8 @@
         div.className = 'cart-item';
         div.innerHTML = `
           <div>
-            <strong>${item.name}</strong>
-            <div style="color: var(--muted); font-size: 12px;">${item.qty} pcs • $${(item.price * item.qty).toFixed(2)}</div>
+            <strong>${item.product_name}</strong>
+            <div style="color: var(--muted); font-size: 12px;">${item.quantity} pcs • $${(item.unit_price * item.quantity).toFixed(2)}</div>
           </div>
           <span class="badge">In cart</span>
         `;
@@ -372,11 +456,11 @@
         div.className = 'mini';
         div.innerHTML = `
           <div class="flex" style="gap:6px;">
-            <strong>${p.name}</strong>
+            <strong>${p.product_name}</strong>
             <span class="badge">${p.category}</span>
           </div>
           <div style="display:flex; justify-content:space-between; color:var(--muted); font-size:13px;">
-            <span>ID: ${p.id}</span>
+            <span>ID: ${p.product_sku}</span>
             <span>Stock: <strong style="color:var(--text)">${p.stock}</strong></span>
           </div>
         `;
@@ -385,34 +469,85 @@
     }
 
     function addToCart(product, qty) {
-      const existing = cart.find((c) => c.id === product.id);
+      const existing = cart.find((c) => c.product_sku === product.product_sku);
       if (existing) {
-        existing.qty = Math.min(existing.qty + qty, product.stock);
+        existing.quantity = Math.min(existing.quantity + qty, product.stock);
       } else {
-        cart.push({ ...product, qty });
+        cart.push({ ...product, quantity: qty });
       }
       status.style.display = 'block';
-      status.textContent = `${product.name} added.`;
+      status.textContent = `${product.product_name} added.`;
       renderCart();
     }
 
     search.addEventListener('input', () => {
       const term = search.value.toLowerCase();
-      const filtered = sampleProducts.filter((p) => p.name.toLowerCase().includes(term) || p.id.toLowerCase().includes(term));
+      const filtered = sampleProducts.filter((p) => p.product_name.toLowerCase().includes(term) || p.product_sku.toLowerCase().includes(term));
       renderProducts(filtered);
     });
 
     document.getElementById('addFromBarcode').addEventListener('click', () => {
       const code = document.getElementById('barcode').value.trim();
-      const found = sampleProducts.find((p) => p.id === code);
+      const found = sampleProducts.find((p) => p.product_sku === code);
       if (found) addToCart(found, 1);
       status.style.display = 'block';
       status.textContent = found ? `${code} scanned.` : 'Barcode not found in demo data.';
     });
 
     document.getElementById('complete').addEventListener('click', () => {
+      if (!cart.length) {
+        status.style.display = 'block';
+        status.textContent = 'Add items before completing.';
+        return;
+      }
+
+      // Generate Payload
+      const totalAmount = cart.reduce((sum, item) => sum + (item.unit_price * item.quantity), 0);
+      const discount = 0; // Simple placeholder
+
+      const payload = {
+        branch_id: 101, // Mock branch
+        cashier_id: 505, // Mock cashier
+        transaction_id: `POS_${new Date().toISOString().replace(/[-:T.]/g, '').slice(0, 14)}`,
+        total_amount: Number(totalAmount.toFixed(2)),
+        discount_applied: discount,
+        final_amount: Number((totalAmount - discount).toFixed(2)),
+        payment_method: "Credit Card",
+        status: "Completed",
+        items: cart.map(item => ({
+          product_sku: item.product_sku,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          line_total: Number((item.unit_price * item.quantity).toFixed(2))
+        }))
+      };
+
+      console.log('Transaction Payload:', payload);
+
+      // Send to API
+      // Send to API
+      fetch(`${API_BASE_URL}/api/sales`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+        .then(response => response.json())
+        .then(data => {
+          console.log('API Response:', data);
+          alert('Sale sent to API!\n' + JSON.stringify(data, null, 2));
+          status.textContent = 'Sale completed and sent to backend.';
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error sending to API. Is the server running?');
+          status.textContent = 'Sale completed locally (API error).';
+        });
+
       status.style.display = 'block';
-      status.textContent = cart.length ? 'Sale completed (demo only).' : 'Add items before completing.';
+      cart.length = 0; // Clear cart
+      renderCart();
     });
 
     document.getElementById('switchMode').addEventListener('click', () => {
@@ -424,4 +559,5 @@
     renderStock();
   </script>
 </body>
+
 </html>

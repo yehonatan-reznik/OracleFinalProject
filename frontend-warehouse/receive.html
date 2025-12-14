@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Warehouse - Receive</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
   <style>
     :root {
       --bg: #f6f8fb;
@@ -17,7 +19,11 @@
       --shadow: 0 16px 46px rgba(15, 23, 42, 0.12);
       --radius: 16px;
     }
-    * { box-sizing: border-box; }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       font-family: 'Space Grotesk', sans-serif;
@@ -26,6 +32,7 @@
       min-height: 100vh;
       padding: 18px;
     }
+
     header {
       display: flex;
       justify-content: space-between;
@@ -39,6 +46,7 @@
       top: 12px;
       z-index: 10;
     }
+
     .logo {
       display: inline-flex;
       align-items: center;
@@ -46,6 +54,7 @@
       font-weight: 800;
       font-size: 18px;
     }
+
     .logo span {
       width: 38px;
       height: 38px;
@@ -56,7 +65,13 @@
       color: #fff;
       font-weight: 800;
     }
-    nav { display: flex; gap: 12px; align-items: center; }
+
+    nav {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
     nav a {
       text-decoration: none;
       color: var(--muted);
@@ -65,13 +80,20 @@
       transition: background 0.2s, color 0.2s;
       font-weight: 600;
     }
-    nav a.active, nav a:hover { background: #dbeafe; color: #0f172a; }
+
+    nav a.active,
+    nav a:hover {
+      background: #dbeafe;
+      color: #0f172a;
+    }
+
     .layout {
       margin-top: 16px;
       display: grid;
       grid-template-columns: 1.1fr 0.9fr;
       gap: 16px;
     }
+
     .card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -79,11 +101,30 @@
       padding: 16px;
       box-shadow: var(--shadow);
     }
-    h2 { margin: 0 0 8px; }
-    p { margin: 0 0 8px; color: var(--muted); }
-    form { display: grid; gap: 12px; margin-top: 8px; }
-    label { font-weight: 600; font-size: 14px; color: var(--text); }
-    input, select {
+
+    h2 {
+      margin: 0 0 8px;
+    }
+
+    p {
+      margin: 0 0 8px;
+      color: var(--muted);
+    }
+
+    form {
+      display: grid;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    input,
+    select {
       width: 100%;
       padding: 12px;
       border-radius: 12px;
@@ -92,12 +133,15 @@
       font-size: 14px;
       transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
     }
-    input:focus, select:focus {
+
+    input:focus,
+    select:focus {
       outline: none;
       border-color: var(--accent);
       background: #fff;
       box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.12);
     }
+
     .btn {
       padding: 13px 14px;
       border-radius: 12px;
@@ -109,15 +153,30 @@
       box-shadow: 0 12px 26px rgba(14, 165, 233, 0.22);
       transition: transform 0.15s, background 0.2s;
     }
-    .btn:hover { transform: translateY(-1px); background: #0284c7; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td {
+
+    .btn:hover {
+      transform: translateY(-1px);
+      background: #0284c7;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th,
+    td {
       text-align: left;
       padding: 10px 8px;
       border-bottom: 1px solid var(--border);
       font-size: 14px;
     }
-    th { color: var(--muted); }
+
+    th {
+      color: var(--muted);
+    }
+
     .status {
       margin-top: 10px;
       padding: 10px 12px;
@@ -127,7 +186,13 @@
       border: 1px solid #99f6e4;
       display: none;
     }
-    @media (max-width: 960px) { .layout { grid-template-columns: 1fr; } }
+
+    @media (max-width: 960px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .switch {
       padding: 10px 12px;
       border-radius: 12px;
@@ -138,9 +203,14 @@
       cursor: pointer;
       transition: background 0.2s, transform 0.15s;
     }
-    .switch:hover { background: #dbeafe; transform: translateY(-1px); }
+
+    .switch:hover {
+      background: #dbeafe;
+      transform: translateY(-1px);
+    }
   </style>
 </head>
+
 <body>
   <header>
     <div class="logo"><span>WH</span>Receive</div>
@@ -152,7 +222,9 @@
       <a href="reports.html">Reports</a>
     </nav>
     <div style="display:flex; align-items:center; gap:10px;">
-      <div class="logo" style="width:auto; padding:8px 12px; border-radius:12px; background:#e0f2fe; color:#0369a1; font-size:14px;">Dock 2</div>
+      <div class="logo"
+        style="width:auto; padding:8px 12px; border-radius:12px; background:#e0f2fe; color:#0369a1; font-size:14px;">
+        Dock 2</div>
       <button class="switch" id="switchMode">Switch mode</button>
     </div>
   </header>
@@ -162,17 +234,23 @@
       <h2>Receive goods</h2>
       <p>Capture inbound items as they arrive at the dock.</p>
       <form id="receiveForm">
-        <div>
-          <label for="product">Product</label>
-          <input id="product" type="text" placeholder="e.g., PRD-009 - LED Monitor" required>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label for="product_sku">Product SKU</label>
+            <input id="product_sku" type="text" placeholder="e.g., PRD-009" required>
+          </div>
+          <div>
+            <label for="product_name">Product Name</label>
+            <input id="product_name" type="text" placeholder="e.g., LED Monitor" required>
+          </div>
         </div>
         <div>
           <label for="quantity">Quantity</label>
           <input id="quantity" type="number" min="1" value="10" required>
         </div>
         <div>
-          <label for="supplier">Supplier</label>
-          <input id="supplier" type="text" placeholder="BlueTech Supplies" required>
+          <label for="supplier_id">Supplier ID</label>
+          <input id="supplier_id" type="number" placeholder="Supplier ID (e.g., 501)" required>
         </div>
         <div>
           <label for="date">Date</label>
@@ -186,16 +264,40 @@
     <div class="card">
       <h2>Recent receipts</h2>
       <table>
-        <thead><tr><th>Ref</th><th>Product</th><th>Qty</th><th>Supplier</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Ref</th>
+            <th>SKU</th>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Supplier ID</th>
+          </tr>
+        </thead>
         <tbody id="recent">
-          <tr><td>RCV-2031</td><td>Thermal Paper</td><td>40</td><td>PaperWorks</td></tr>
-          <tr><td>RCV-2032</td><td>Wireless Mouse</td><td>80</td><td>North Supply</td></tr>
-          <tr><td>RCV-2033</td><td>Laptop Stand</td><td>22</td><td>PrimeLogix</td></tr>
+          <tr>
+            <td>RCV-2031</td>
+            <td>Thermal Paper</td>
+            <td>40</td>
+            <td>PaperWorks</td>
+          </tr>
+          <tr>
+            <td>RCV-2032</td>
+            <td>Wireless Mouse</td>
+            <td>80</td>
+            <td>North Supply</td>
+          </tr>
+          <tr>
+            <td>RCV-2033</td>
+            <td>Laptop Stand</td>
+            <td>22</td>
+            <td>PrimeLogix</td>
+          </tr>
         </tbody>
       </table>
     </div>
   </div>
 
+  <script src="../frontend-common/config.js"></script>
   <script>
     const form = document.getElementById('receiveForm');
     const status = document.getElementById('status');
@@ -204,15 +306,51 @@
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      const product = document.getElementById('product').value;
-      const qty = document.getElementById('quantity').value;
-      const supplier = document.getElementById('supplier').value;
+      const sku = document.getElementById('product_sku').value;
+      const name = document.getElementById('product_name').value;
+      const qty = Number(document.getElementById('quantity').value);
+      const supplierId = Number(document.getElementById('supplier_id').value);
       const ref = 'RCV-' + Math.floor(Math.random() * 9000 + 1000);
+
       const row = document.createElement('tr');
-      row.innerHTML = `<td>${ref}</td><td>${product}</td><td>${qty}</td><td>${supplier}</td>`;
+      row.innerHTML = `<td>${ref}</td><td>${sku}</td><td>${name}</td><td>${qty}</td><td>${supplierId}</td>`;
       recent.prepend(row);
+
+      // Generate Payload
+      const payload = {
+        product_sku: sku,
+        product_name: name,
+        quantity: qty,
+        supplier_id: supplierId,
+        branch_id: 102, // Hardcoded Warehouse/Branch ID
+        timestamp: new Date().toISOString(),
+        operation: "INVENTORY_RECEIPT"
+      };
+
+      console.log('Inventory Update Payload:', payload);
+
+      // Send to API
+      // Send to API
+      fetch(`${API_BASE_URL}/api/inventory`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+        .then(response => response.json())
+        .then(data => {
+          console.log('API Response:', data);
+          alert('Stock update sent to API!\n' + JSON.stringify(data, null, 2));
+          status.textContent = `Received ${qty} of ${sku}. Sent to backend.`;
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error sending to API. Is the server running?');
+          status.textContent = `Received ${qty} of ${sku} (API error).`;
+        });
+
       status.style.display = 'block';
-      status.textContent = `Received ${qty} of ${product}.`;
       form.reset();
       document.getElementById('date').valueAsDate = new Date();
     });
@@ -222,4 +360,5 @@
     });
   </script>
 </body>
+
 </html>

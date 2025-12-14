@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>POS - Stock Check</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
   <style>
     :root {
       --bg: #f6f8fb;
@@ -17,7 +19,11 @@
       --shadow: 0 16px 46px rgba(37, 99, 235, 0.08);
       --radius: 16px;
     }
-    * { box-sizing: border-box; }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       font-family: 'Space Grotesk', sans-serif;
@@ -26,6 +32,7 @@
       min-height: 100vh;
       padding: 18px;
     }
+
     header {
       display: flex;
       justify-content: space-between;
@@ -39,6 +46,7 @@
       top: 12px;
       z-index: 10;
     }
+
     .logo {
       display: inline-flex;
       align-items: center;
@@ -46,6 +54,7 @@
       font-weight: 800;
       font-size: 18px;
     }
+
     .logo span {
       width: 38px;
       height: 38px;
@@ -56,7 +65,13 @@
       color: #fff;
       font-weight: 800;
     }
-    nav { display: flex; gap: 12px; align-items: center; }
+
+    nav {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
     nav a {
       text-decoration: none;
       color: var(--muted);
@@ -65,7 +80,13 @@
       transition: background 0.2s, color 0.2s;
       font-weight: 600;
     }
-    nav a.active, nav a:hover { background: #e0e7ff; color: #1d4ed8; }
+
+    nav a.active,
+    nav a:hover {
+      background: #e0e7ff;
+      color: #1d4ed8;
+    }
+
     .card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -74,8 +95,16 @@
       box-shadow: var(--shadow);
       margin-top: 16px;
     }
-    h2 { margin: 0 0 8px; }
-    p { margin: 0 0 12px; color: var(--muted); }
+
+    h2 {
+      margin: 0 0 8px;
+    }
+
+    p {
+      margin: 0 0 12px;
+      color: var(--muted);
+    }
+
     input {
       width: 100%;
       padding: 12px;
@@ -85,17 +114,20 @@
       font-size: 14px;
       transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
     }
+
     input:focus {
       outline: none;
       border-color: var(--primary);
       background: #fff;
       box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
     }
+
     .info {
       margin-top: 12px;
       display: grid;
       gap: 8px;
     }
+
     .pill {
       display: inline-flex;
       align-items: center;
@@ -107,6 +139,7 @@
       font-weight: 700;
       font-size: 12px;
     }
+
     .switch {
       padding: 10px 12px;
       border-radius: 12px;
@@ -117,7 +150,12 @@
       cursor: pointer;
       transition: background 0.2s, transform 0.15s;
     }
-    .switch:hover { background: #e0e7ff; transform: translateY(-1px); }
+
+    .switch:hover {
+      background: #e0e7ff;
+      transform: translateY(-1px);
+    }
+
     .stat {
       background: #f8fafc;
       border: 1px solid var(--border);
@@ -129,6 +167,7 @@
     }
   </style>
 </head>
+
 <body>
   <header>
     <div class="logo"><span>POS</span>Stock Check</div>
@@ -166,38 +205,58 @@
     </div>
   </div>
 
+  <script src="../frontend-common/config.js"></script>
   <script>
-    const data = {
-      'PRD-001': { name: 'Wireless Mouse', category: 'Accessories', stock: 24 },
-      'PRD-002': { name: 'Mechanical Keyboard', category: 'Accessories', stock: 12 },
-      'PRD-003': { name: 'USB-C Cable 1m', category: 'Cables', stock: 78 },
-      'PRD-004': { name: 'HD Webcam', category: 'Peripherals', stock: 9 }
-    };
     const info = document.getElementById('info');
     document.getElementById('productId').addEventListener('input', (e) => {
       const value = e.target.value.trim().toUpperCase();
-      const item = data[value];
+      if (!value) return;
+
+      // Local Fallback (for demo if API fails/is missing endpoint)
+      const localData = {
+        'PRD-001': { name: 'Wireless Mouse', category: 'Accessories', stock: 24 },
+        'PRD-002': { name: 'Mechanical Keyboard', category: 'Accessories', stock: 12 }
+      };
+
+      // Call API
+      fetch(`${API_BASE_URL}/api/products/${value}`)
+        .then(res => {
+          if (!res.ok) throw new Error('Not found');
+          return res.json();
+        })
+        .then(item => {
+          renderItem(item, value, true);
+        })
+        .catch(err => {
+          // Fallback to local data for smooth demo if backend isn't full
+          const item = localData[value];
+          renderItem(item, value, !!item);
+        });
+    });
+
+    function renderItem(item, value, found) {
       info.innerHTML = `
         <div class="stat">
           <div>
-            <strong>${item ? item.name : 'Unknown product'}</strong>
-            <div style="color:var(--muted); font-size:12px;">${value || 'Waiting for input'}</div>
+            <strong>${found ? (item.name || item.product_name) : 'Unknown product'}</strong>
+            <div style="color:var(--muted); font-size:12px;">${value}</div>
           </div>
-          <span class="pill">${item ? 'Found' : 'Not in demo'}</span>
+          <span class="pill">${found ? 'Found' : 'Not found'}</span>
         </div>
         <div class="stat">
           <div>
             <strong>Category</strong>
-            <div style="color:var(--muted); font-size:12px;">${item ? item.category : '-'}</div>
+            <div style="color:var(--muted); font-size:12px;">${found ? item.category : '-'}</div>
           </div>
-          <strong>Stock: ${item ? item.stock : '--'}</strong>
+          <strong>Stock: ${found ? (item.stock || item.quantity) : '--'}</strong>
         </div>
       `;
-    });
+    }
 
     document.getElementById('switchMode').addEventListener('click', () => {
       window.location.href = '../frontend-warehouse/dashboard.html';
     });
   </script>
 </body>
+
 </html>
