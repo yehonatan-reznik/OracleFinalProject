@@ -136,6 +136,7 @@
     <div style="display:flex; align-items:center; gap:10px;">
       <div class="logo" style="width:auto; padding:8px 12px; border-radius:12px; background:#e0f2fe; color:#0369a1; font-size:14px;">Approvals</div>
       <button class="switch" id="switchMode">Switch mode</button>
+      <button class="switch" id="logoutBtn">Logout</button>
     </div>
   </header>
 
@@ -147,6 +148,18 @@
   </div>
 
   <script>
+    if (!localStorage.getItem('user_id')) {
+      window.location.href = 'warehouse-login.html';
+    }
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = 'index.html';
+      });
+    }
+
     const transfers = [
       { id: 'TRF-3011', from: 'Downtown', to: 'Central', product: 'Wireless Mouse', qty: 24 },
       { id: 'TRF-3012', from: 'Midtown', to: 'Central', product: 'HD Webcam', qty: 8 },

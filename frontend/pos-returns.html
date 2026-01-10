@@ -169,6 +169,7 @@
     <div style="display:flex; align-items:center; gap:10px;">
       <div class="pill">Branch: Midtown</div>
       <button class="switch" id="switchMode">Switch mode</button>
+      <button class="switch" id="logoutBtn">Logout</button>
     </div>
   </header>
 
@@ -200,6 +201,18 @@
   </div>
 
   <script>
+    if (!localStorage.getItem('user_id')) {
+      window.location.href = 'pos-login.html';
+    }
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = 'index.html';
+      });
+    }
+
     const sample = [
       { id: 'RET-1021', name: 'Wireless Mouse', reason: 'Unwanted', status: 'Eligible' },
       { id: 'RET-1022', name: 'USB-C Cable', reason: 'Damaged plug', status: 'Eligible' },

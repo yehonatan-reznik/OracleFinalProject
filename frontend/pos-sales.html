@@ -251,6 +251,7 @@
     <div style="display:flex; align-items:center; gap:10px;">
       <div class="tag">Branch: Downtown</div>
       <button class="switch" id="switchMode">Switch mode</button>
+      <button class="switch" id="logoutBtn">Logout</button>
     </div>
   </header>
 
@@ -298,6 +299,18 @@
   </div>
 
   <script>
+    if (!localStorage.getItem('user_id')) {
+      window.location.href = 'pos-login.html';
+    }
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = 'index.html';
+      });
+    }
+
     const sampleProducts = [
       { id: 'PRD-001', name: 'Wireless Mouse', category: 'Accessories', price: 29.00, stock: 24 },
       { id: 'PRD-002', name: 'Mechanical Keyboard', category: 'Accessories', price: 89.00, stock: 12 },

@@ -134,6 +134,7 @@
     <div style="display:flex; align-items:center; gap:10px;">
       <div class="badge">Site: Central DC</div>
       <button class="switch" id="switchMode">Switch mode</button>
+      <button class="switch" id="logoutBtn">Logout</button>
     </div>
   </header>
 
@@ -178,6 +179,18 @@
   </div>
 
   <script>
+    if (!localStorage.getItem('user_id')) {
+      window.location.href = 'warehouse-login.html';
+    }
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = 'index.html';
+      });
+    }
+
     document.getElementById('switchMode').addEventListener('click', () => {
       window.location.href = 'pos-sales.html';
     });

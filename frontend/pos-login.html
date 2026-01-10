@@ -140,9 +140,9 @@
       margin-top: 10px;
       padding: 10px 12px;
       border-radius: 12px;
-      background: #ecfdf3;
-      color: #166534;
-      border: 1px solid #bbf7d0;
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
       display: none;
     }
     @media (max-width: 900px) {
@@ -191,11 +191,50 @@
   <script>
     const form = document.getElementById('loginForm');
     const status = document.getElementById('status');
-    form.addEventListener('submit', (e) => {
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const backendUrl = 'http://<BACKEND_PUBLIC_IP>:3000';
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      status.style.display = 'block';
-      status.textContent = 'Demo: Signed in as ' + (document.getElementById('email').value || 'cashier') + '.';
-      setTimeout(() => { window.location.href = 'pos-sales.html'; }, 500);
+      status.style.display = 'none';
+
+      const payload = {
+        email: emailInput.value.trim(),
+        password: passwordInput.value
+      };
+
+      try {
+        const response = await fetch(`${backendUrl}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          status.textContent = 'Invalid email or password';
+          status.style.display = 'block';
+          return;
+        }
+
+        const data = await response.json();
+        const user = data.user || data;
+
+        localStorage.setItem('user_id', user.user_id || '');
+        localStorage.setItem('email', user.email || payload.email);
+        localStorage.setItem('role', user.role || '');
+
+        if (user.role === 'POS') {
+          window.location.href = 'pos-sales.html';
+        } else if (user.role === 'WAREHOUSE') {
+          window.location.href = 'warehouse-dashboard.html';
+        } else {
+          window.location.href = 'index.html';
+        }
+      } catch (err) {
+        status.textContent = 'Invalid email or password';
+        status.style.display = 'block';
+      }
     });
   </script>
 </body>

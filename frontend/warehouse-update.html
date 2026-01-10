@@ -163,6 +163,7 @@
         <label for="managerToggle">Manager mode</label>
       </div>
       <button class="switch" id="switchMode">Switch mode</button>
+      <button class="switch" id="logoutBtn">Logout</button>
     </div>
   </header>
 
@@ -180,6 +181,18 @@
   </div>
 
   <script>
+    if (!localStorage.getItem('user_id')) {
+      window.location.href = 'warehouse-login.html';
+    }
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = 'index.html';
+      });
+    }
+
     const data = [
       { name: 'LED Monitor 24"', branch: 'Central', qty: 82 },
       { name: 'Thermal Printer', branch: 'Central', qty: 18 },

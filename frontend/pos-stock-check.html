@@ -141,6 +141,7 @@
     <div style="display:flex; align-items:center; gap:10px;">
       <div class="pill">Branch: Uptown</div>
       <button class="switch" id="switchMode">Switch mode</button>
+      <button class="switch" id="logoutBtn">Logout</button>
     </div>
   </header>
 
@@ -167,6 +168,18 @@
   </div>
 
   <script>
+    if (!localStorage.getItem('user_id')) {
+      window.location.href = 'pos-login.html';
+    }
+
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = 'index.html';
+      });
+    }
+
     const data = {
       'PRD-001': { name: 'Wireless Mouse', category: 'Accessories', stock: 24 },
       'PRD-002': { name: 'Mechanical Keyboard', category: 'Accessories', stock: 12 },
