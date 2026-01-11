@@ -1,10 +1,11 @@
+const bcrypt = require("bcrypt");
 const { getConnection } = require("../db");
 
 async function login(req, res) {
-  const { username, password_hash: passwordHash } = req.body || {};
+  const { email, password } = req.body || {};
 
-  if (!username || !passwordHash) {
-    return res.status(400).json({ error: "username and password_hash required" });
+  if (!email || !password) {
+    return res.status(400).json({ error: "email and password required" });
   }
 
   let connection;
@@ -14,29 +15,33 @@ async function login(req, res) {
     const result = await connection.execute(
       `
         SELECT user_id,
-               username,
-               full_name,
                email,
-               role,
-               is_active
+               password_hash,
+               role
           FROM app_users
-         WHERE username = :username
-           AND password_hash = :password_hash
-           AND is_deleted = 'N'
+         WHERE email = :email
       `,
-      { username, password_hash: passwordHash }
+      { email }
     );
 
     const user = result.rows[0];
     if (!user) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    if (user.IS_ACTIVE && user.IS_ACTIVE !== "Y") {
-      return res.status(403).json({ error: "User is inactive" });
+    const isValidPassword = await bcrypt.compare(
+      password,
+      user.PASSWORD_HASH || ""
+    );
+    if (!isValidPassword) {
+      return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    return res.json({ user });
+    return res.json({
+      user_id: user.USER_ID,
+      email: user.EMAIL,
+      role: user.ROLE,
+    });
   } catch (err) {
     console.error("Login failed:", err);
     return res.status(500).json({ error: "Login failed" });

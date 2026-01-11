@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 const { initPool, closePool } = require("./db");
 
 const authRoutes = require("./routes/auth");
@@ -8,6 +9,7 @@ const salesRoutes = require("./routes/sales");
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.use(cors());
 app.use(express.json());
 
 app.get("/", (req, res) => {

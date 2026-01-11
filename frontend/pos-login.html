@@ -183,7 +183,7 @@
           <span>Branch: Central City</span>
           <span class="badge">POS</span>
         </div>
-        <div class="status" id="status">Demo: Signed in as cashier.</div>
+        <div class="status" id="status">Invalid email or password</div>
       </form>
     </div>
   </div>
@@ -193,7 +193,7 @@
     const status = document.getElementById('status');
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
-    const backendUrl = 'http://<BACKEND_PUBLIC_IP>:3000';
+    const backendUrl = 'http://<PUBLIC_BACKEND_IP>:3000';
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -211,8 +211,13 @@
           body: JSON.stringify(payload)
         });
 
-        if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
           status.textContent = 'Invalid email or password';
+          status.style.display = 'block';
+          return;
+        }
+        if (!response.ok) {
+          status.textContent = 'Login failed';
           status.style.display = 'block';
           return;
         }
@@ -232,7 +237,7 @@
           window.location.href = 'index.html';
         }
       } catch (err) {
-        status.textContent = 'Invalid email or password';
+        status.textContent = 'Login failed';
         status.style.display = 'block';
       }
     });
