@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --primary: #2563eb;
+      --accent: #0ea5e9;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 16px 46px rgba(37, 99, 235, 0.08);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Space Grotesk', sans-serif;
+      background: radial-gradient(circle at 20% 20%, #eef2ff, #f8fafc 35%), var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 32px 16px;
+    }
+    .card {
+      width: min(520px, 100%);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+    }
+    h1 { margin: 0 0 8px; font-size: 26px; }
+    p { margin: 0 0 18px; color: var(--muted); }
+    form { display: grid; gap: 12px; }
+    label { font-weight: 600; font-size: 14px; }
+    input, select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: #f9fafb;
+      font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+    button {
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: none;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 15px;
+      transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.25);
+    }
+    button:hover { transform: translateY(-1px); background: #1e40af; }
+    .status {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: #fef2f2;
+      color: #991b1b;
+      border: 1px solid #fecaca;
+      display: none;
+    }
+    .status.ok {
+      background: #ecfdf3;
+      color: #166534;
+      border-color: #bbf7d0;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .link {
+      color: #1d4ed8;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Create account</h1>
+    <p>Register a new POS or Warehouse user.</p>
+    <form id="registerForm">
+      <div>
+        <label for="full_name">Full name</label>
+        <input type="text" id="full_name" required>
+      </div>
+      <div>
+        <label for="username">Username</label>
+        <input type="text" id="username" required>
+      </div>
+      <div>
+        <label for="email">Email</label>
+        <input type="email" id="email" required>
+      </div>
+      <div>
+        <label for="password">Password</label>
+        <input type="password" id="password" minlength="6" required>
+      </div>
+      <div>
+        <label for="role">Role</label>
+        <select id="role" required>
+          <option value="POS">POS</option>
+          <option value="WAREHOUSE">WAREHOUSE</option>
+        </select>
+      </div>
+      <button type="submit">Register</button>
+      <div class="row">
+        <span>Already have an account?</span>
+        <a class="link" href="pos-login.html">Go to login</a>
+      </div>
+      <div class="status" id="status">Registration failed</div>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('registerForm');
+    const status = document.getElementById('status');
+    const backendUrl = 'http://localhost:3001';
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      status.style.display = 'none';
+      status.classList.remove('ok');
+
+      const payload = {
+        username: document.getElementById('username').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value,
+        full_name: document.getElementById('full_name').value.trim(),
+        role: document.getElementById('role').value
+      };
+
+      try {
+        const response = await fetch(`${backendUrl}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.status === 409) {
+          status.textContent = 'User already exists';
+          status.style.display = 'block';
+          return;
+        }
+        if (!response.ok) {
+          status.textContent = 'Registration failed';
+          status.style.display = 'block';
+          return;
+        }
+
+        status.textContent = 'Registration successful. Please log in.';
+        status.classList.add('ok');
+        status.style.display = 'block';
+        form.reset();
+      } catch (err) {
+        status.textContent = 'Registration failed';
+        status.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>
