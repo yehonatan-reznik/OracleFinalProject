@@ -169,6 +169,25 @@
           return;
         }
 
+        const data = await response.json();
+
+        if (data && data.token) {
+          const user = data.user || data;
+          localStorage.setItem('user_id', user.user_id || '');
+          localStorage.setItem('email', user.email || payload.email);
+          localStorage.setItem('role', user.role || '');
+          localStorage.setItem('token', data.token);
+
+          if (user.role === 'POS') {
+            window.location.href = 'pos-sales.html';
+          } else if (user.role === 'WAREHOUSE') {
+            window.location.href = 'warehouse-dashboard.html';
+          } else {
+            window.location.href = 'index.html';
+          }
+          return;
+        }
+
         status.textContent = 'Registration successful. Please log in.';
         status.classList.add('ok');
         status.style.display = 'block';

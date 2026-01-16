@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const oracledb = require("oracledb");
 const { getConnection } = require("../db");
 
 async function login(req, res) {
@@ -27,7 +28,8 @@ async function login(req, res) {
             or lower(email) = lower(:id)
          fetch first 1 row only
       `,
-      { id: identifier }
+      { id: identifier },
+      { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
 
     const user = result.rows[0];
@@ -92,6 +94,11 @@ async function register(req, res) {
   }
   if (password.length < 6) {
     return res.status(400).json({ error: "password too short" });
+  }
+
+  const jwt_secret = process.env.jwt_secret || process.env.JWT_SECRET;
+  if (!jwt_secret) {
+    return res.status(500).json({ error: "jwt secret not configured" });
   }
 
   let connection;
@@ -168,12 +175,24 @@ async function register(req, res) {
 
     await connection.commit();
 
+    const token = jwt.sign(
+      {
+        user_id: next_id,
+        username,
+        email,
+        role,
+      },
+      jwt_secret,
+      { expiresIn: "7d" }
+    );
+
     return res.status(201).json({
       user_id: next_id,
       username,
       email,
       full_name,
       role,
+      token,
     });
   } catch (err) {
     if (connection) {

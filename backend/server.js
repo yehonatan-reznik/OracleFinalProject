@@ -24,7 +24,8 @@ app.get("/", (req, res) => {
 app.get("/api/db-test", async (req, res) => {
   try {
     const result = await query("select user from dual");
-    const user = result.rows[0]?.USER || null;
+    const row = result.rows[0];
+    const user = row?.USER ?? row?.[0] ?? null;
     res.json({ user });
   } catch (err) {
     console.error("DB test failed:", err);
