@@ -117,13 +117,17 @@ async function register(req, res) {
 
     const id_result = await connection.execute(
       `
-        select nvl(max(user_id), 0) + 1 as next_id
-          from inventory_user.app_users
-         for update
+        select inventory_user.APP_USERS_SEQ.nextval as next_id
+          from dual
       `
     );
 
-    const next_id = id_result.rows[0].NEXT_ID;
+    const firstRow = id_result.rows?.[0];
+    const next_id =
+      (firstRow && (firstRow.NEXT_ID ?? firstRow[0])) ?? null;
+    if (next_id === null || next_id === undefined) {
+      throw new Error("Failed to generate user_id from app_users_seq");
+    }
 
     await connection.execute(
       `

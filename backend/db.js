@@ -2,6 +2,15 @@ const oracledb = require("oracledb");
 
 require("dotenv").config();
 
+console.log("db_user from env:", process.env.db_user);
+console.log("db_password length:", (process.env.db_password || "").length);
+console.log("cwd:", process.cwd());
+console.log("env file loaded:", require("path").resolve(".env"));
+
+if (process.env.tns_admin) {
+  process.env.TNS_ADMIN = process.env.tns_admin;
+}
+
 if (process.env.oci_lib_dir) {
   oracledb.initOracleClient({ libDir: process.env.oci_lib_dir });
 }
@@ -16,19 +25,23 @@ async function initPool() {
   }
 
   const connectString = process.env.db_connect_string;
-  const tnsAdmin = process.env.tns_admin;
+  const tnsAdmin = process.env.TNS_ADMIN || process.env.tns_admin;
 
-  console.log("using tns_admin:", tnsAdmin);
-  console.log("using connectString:", connectString);
-  console.log("oracle client version:", oracledb.oracleClientVersionString);
+  console.log(`Using TNS_ADMIN: ${tnsAdmin}`);
+  console.log(`Using connectString: ${connectString}`);
+  console.log(`Oracle driver mode: ${oracledb.thin ? "thin" : "thick"}`);
 
   try {
     const poolConfig = {
       poolAlias: "main",
       user: process.env.db_user,
       password: process.env.db_password,
-      connectString: process.env.db_connect_string,
+      connectString,
     };
+
+    if (process.env.wallet_password) {
+      poolConfig.walletPassword = process.env.wallet_password;
+    }
 
     pool = await oracledb.createPool(poolConfig);
   } catch (err) {
