@@ -163,11 +163,7 @@
     <div style="display:grid; gap:10px; max-width:520px;">
       <div>
         <label for="product">Product</label>
-        <select id="product">
-          <option value="PRD-001">PRD-001 - Wireless Mouse (Expected 24)</option>
-          <option value="PRD-002">PRD-002 - Mechanical Keyboard (Expected 12)</option>
-          <option value="PRD-003">PRD-003 - USB-C Cable 1m (Expected 78)</option>
-        </select>
+        <select id="product"></select>
       </div>
       <div>
         <label for="count">Counted quantity</label>
@@ -180,42 +176,101 @@
     </div>
   </div>
 
+  <script src="config.js"></script>
+  <script src="app.js"></script>
   <script>
-    if (!localStorage.getItem('user_id')) {
+    if (!App.requireAuth('warehouse-login.html')) {
+      throw new Error('auth required');
+    }
+
+    const { warehouse_id: warehouseId } = App.getWarehouseContext();
+    if (!warehouseId) {
       window.location.href = 'warehouse-login.html';
     }
 
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-        localStorage.clear();
-        window.location.href = 'index.html';
-      });
+      logoutBtn.addEventListener('click', () => App.logout());
     }
 
-    const expected = { 'PRD-001': 24, 'PRD-002': 12, 'PRD-003': 78 };
     const productSelect = document.getElementById('product');
     const countInput = document.getElementById('count');
     const result = document.getElementById('result');
+    let inventory = [];
 
-    document.getElementById('submit').addEventListener('click', () => {
-      const key = productSelect.value;
+    function setOptions(items) {
+      productSelect.innerHTML = '';
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = 'Select product';
+      placeholder.disabled = true;
+      placeholder.selected = true;
+      productSelect.appendChild(placeholder);
+
+      items.forEach((item) => {
+        const option = document.createElement('option');
+        option.value = item.product_id;
+        option.textContent = `${item.product_name} (Expected ${item.quantity_on_hand})`;
+        productSelect.appendChild(option);
+      });
+    }
+
+    document.getElementById('submit').addEventListener('click', async () => {
+      const productId = Number(productSelect.value);
       const counted = Number(countInput.value);
-      const diff = counted - expected[key];
+      if (!Number.isFinite(productId)) {
+        result.innerHTML = '<div class="diff">Select a product first.</div>';
+        return;
+      }
+      if (!Number.isFinite(counted) || counted < 0) {
+        result.innerHTML = '<div class="diff">Enter a valid quantity.</div>';
+        return;
+      }
+
+      const item = inventory.find((p) => p.product_id === productId);
+      const expected = item ? Number(item.quantity_on_hand) : 0;
+      const diff = counted - expected;
       const status = diff === 0 ? 'Matched expected quantity' : diff > 0 ? `Over by ${diff}` : `Short by ${Math.abs(diff)}`;
       const color = diff === 0 ? '#ecfdf3' : diff > 0 ? '#e0f2fe' : '#fef2f2';
-      result.innerHTML = `
-        <div class="pill">Product ${key}</div>
-        <div class="diff" style="background:${color}">
-          <strong>${status}</strong><br>
-          <span style="color:var(--muted);">Counted ${counted}, expected ${expected[key]}</span>
-        </div>
-      `;
+
+      try {
+        await App.apiFetch('/api/inventory/adjust', {
+          method: 'POST',
+          body: JSON.stringify({
+            warehouse_id: Number(warehouseId),
+            product_id: productId,
+            quantity_on_hand: counted
+          })
+        });
+
+        result.innerHTML = `
+          <div class="pill">Product ${item.product_name}</div>
+          <div class="diff" style="background:${color}">
+            <strong>${status}</strong><br>
+            <span style="color:var(--muted);">Counted ${counted}, expected ${expected}</span>
+          </div>
+        `;
+        await loadInventory();
+      } catch (err) {
+        result.innerHTML = `<div class="diff">${err.message || 'Failed to submit count.'}</div>`;
+      }
     });
+
+    async function loadInventory() {
+      try {
+        const data = await App.apiFetch(`/api/inventory?warehouse_id=${warehouseId}`);
+        inventory = data.items || [];
+        setOptions(inventory);
+      } catch (err) {
+        result.innerHTML = '<div class="diff">Failed to load inventory.</div>';
+      }
+    }
 
     document.getElementById('switchMode').addEventListener('click', () => {
       window.location.href = 'pos-sales.html';
     });
+
+    loadInventory();
   </script>
 </body>
 </html>

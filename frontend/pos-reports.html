@@ -134,7 +134,7 @@
       <a class="active" href="#">Reports</a>
     </nav>
     <div style="display:flex; align-items:center; gap:10px;">
-      <div class="trend">Today: +6.2%</div>
+      <div class="trend" id="trendLabel">Today</div>
       <button class="switch" id="switchMode">Switch mode</button>
       <button class="switch" id="logoutBtn">Logout</button>
     </div>
@@ -144,17 +144,17 @@
     <div class="card">
       <h2>Daily sales</h2>
       <p>Sales performance for the current day</p>
-      <div class="stat">$7,420</div>
-      <div class="trend">↑ 8% vs yesterday</div>
-      <div class="placeholder">Sales chart placeholder</div>
+      <div class="stat" id="dailySales">$0.00</div>
+      <div class="trend" id="salesTrend">Updated today</div>
+      <div class="placeholder" id="salesChart">No chart data</div>
     </div>
 
     <div class="card">
       <h2>Returns</h2>
       <p>Items processed for returns today</p>
-      <div class="stat">14</div>
-      <div class="trend" style="background:#fef2f2; color:#991b1b;">↓ 2% vs yesterday</div>
-      <div class="placeholder">Returns chart placeholder</div>
+      <div class="stat" id="returnsCount">0</div>
+      <div class="trend" id="returnsTrend" style="background:#fef2f2; color:#991b1b;">Updated today</div>
+      <div class="placeholder" id="returnsChart">No chart data</div>
     </div>
 
     <div class="card">
@@ -164,11 +164,7 @@
         <thead>
           <tr><th>Product</th><th>Qty</th><th>Branch</th></tr>
         </thead>
-        <tbody>
-          <tr><td>HD Webcam</td><td>9</td><td>Downtown</td></tr>
-          <tr><td>Receipt Paper</td><td>14</td><td>Midtown</td></tr>
-          <tr><td>USB-C Cable 1m</td><td>22</td><td>Uptown</td></tr>
-        </tbody>
+        <tbody id="lowStockBody"></tbody>
       </table>
     </div>
   </div>
@@ -181,11 +177,7 @@
         <thead>
           <tr><th>ID</th><th>Cashier</th><th>Branch</th><th>Total</th><th>Status</th></tr>
         </thead>
-        <tbody>
-          <tr><td>SAL-8301</td><td>A. Vega</td><td>Downtown</td><td>$120.90</td><td>Completed</td></tr>
-          <tr><td>SAL-8302</td><td>M. Chen</td><td>Midtown</td><td>$89.00</td><td>Completed</td></tr>
-          <tr><td>SAL-8303</td><td>K. Patel</td><td>Uptown</td><td>$65.00</td><td>Pending</td></tr>
-        </tbody>
+        <tbody id="recentSalesBody"></tbody>
       </table>
     </div>
 
@@ -194,31 +186,84 @@
       <p>Reasons logged today</p>
       <table>
         <thead><tr><th>Reason</th><th>Count</th></tr></thead>
-        <tbody>
-          <tr><td>Damaged</td><td>5</td></tr>
-          <tr><td>Wrong item</td><td>6</td></tr>
-          <tr><td>Changed mind</td><td>3</td></tr>
-        </tbody>
+        <tbody id="returnReasonsBody"></tbody>
       </table>
     </div>
   </div>
 
+  <script src="config.js"></script>
+  <script src="app.js"></script>
   <script>
-    if (!localStorage.getItem('user_id')) {
+    if (!App.requireAuth('pos-login.html')) {
+      throw new Error('auth required');
+    }
+
+    const { warehouse_id: warehouseId, warehouse_name: warehouseName } = App.getWarehouseContext();
+    if (!warehouseId) {
       window.location.href = 'pos-login.html';
+    }
+
+    const trendLabel = document.getElementById('trendLabel');
+    if (trendLabel) {
+      trendLabel.textContent = `Branch: ${warehouseName || 'Assigned'}`;
     }
 
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-        localStorage.clear();
-        window.location.href = 'index.html';
-      });
+      logoutBtn.addEventListener('click', () => App.logout());
+    }
+
+    function setTableRows(tbody, rows) {
+      tbody.innerHTML = '';
+      if (!rows.length) {
+        const tr = document.createElement('tr');
+        const colCount = tbody.closest('table').querySelectorAll('thead th').length;
+        tr.innerHTML = `<td colspan=\"${colCount}\">No data available</td>`;
+        tbody.appendChild(tr);
+        return;
+      }
+      rows.forEach((row) => tbody.appendChild(row));
+    }
+
+    async function loadReport() {
+      try {
+        const data = await App.apiFetch(`/api/reports/pos?warehouse_id=${warehouseId}`);
+        document.getElementById('dailySales').textContent = `$${Number(data.totals.total_sales || 0).toFixed(2)}`;
+        document.getElementById('returnsCount').textContent = data.totals.returns_count || 0;
+
+        const lowStockBody = document.getElementById('lowStockBody');
+        const lowStockRows = (data.low_stock || []).map((item) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${item.product_name}</td><td>${item.quantity_on_hand}</td><td>${item.warehouse_name}</td>`;
+          return tr;
+        });
+        setTableRows(lowStockBody, lowStockRows);
+
+        const recentSalesBody = document.getElementById('recentSalesBody');
+        const recentRows = (data.recent_sales || []).map((sale) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${sale.sale_number}</td><td>${sale.cashier_id}</td><td>${warehouseName || '-'}</td><td>$${Number(sale.total_amount || 0).toFixed(2)}</td><td>${sale.status}</td>`;
+          return tr;
+        });
+        setTableRows(recentSalesBody, recentRows);
+
+        const reasonsBody = document.getElementById('returnReasonsBody');
+        const reasonRows = (data.return_reasons || []).map((reason) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${reason.reason}</td><td>${reason.total}</td>`;
+          return tr;
+        });
+        setTableRows(reasonsBody, reasonRows);
+      } catch (err) {
+        document.getElementById('salesChart').textContent = err.message || 'Failed to load report';
+      }
     }
 
     document.getElementById('switchMode').addEventListener('click', () => {
       window.location.href = 'warehouse-dashboard.html';
     });
+
+    loadReport();
   </script>
 </body>
 </html>

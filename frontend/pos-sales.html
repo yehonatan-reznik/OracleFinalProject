@@ -298,49 +298,59 @@
     </div>
   </div>
 
+  <script src="config.js"></script>
+  <script src="app.js"></script>
   <script>
-    if (!localStorage.getItem('user_id')) {
+    if (!App.requireAuth('pos-login.html')) {
+      throw new Error('auth required');
+    }
+
+    const { warehouse_id: warehouseId, warehouse_name: warehouseName } = App.getWarehouseContext();
+    if (!warehouseId) {
       window.location.href = 'pos-login.html';
+    }
+
+    const branchTag = document.querySelector('.tag');
+    if (branchTag) {
+      branchTag.textContent = `Branch: ${warehouseName || 'Assigned'}`;
     }
 
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-        localStorage.clear();
-        window.location.href = 'index.html';
-      });
+      logoutBtn.addEventListener('click', () => App.logout());
     }
 
-    const sampleProducts = [
-      { id: 'PRD-001', name: 'Wireless Mouse', category: 'Accessories', price: 29.00, stock: 24 },
-      { id: 'PRD-002', name: 'Mechanical Keyboard', category: 'Accessories', price: 89.00, stock: 12 },
-      { id: 'PRD-003', name: 'USB-C Cable 1m', category: 'Cables', price: 12.00, stock: 78 },
-      { id: 'PRD-004', name: 'HD Webcam', category: 'Peripherals', price: 65.00, stock: 9 },
-      { id: 'PRD-005', name: 'Laptop Stand', category: 'Ergonomics', price: 39.00, stock: 18 }
-    ];
     const cart = [];
+    let products = [];
+
     const productsBody = document.getElementById('products');
     const cartContainer = document.getElementById('cart');
     const stockList = document.getElementById('stockList');
     const search = document.getElementById('search');
     const status = document.getElementById('status');
 
+    function formatMoney(value) {
+      const num = Number(value) || 0;
+      return num.toFixed(2);
+    }
+
     function renderProducts(list) {
       productsBody.innerHTML = '';
       list.forEach((p) => {
+        const available = Number(p.quantity_on_hand) || 0;
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td><strong>${p.name}</strong><br><small style="color: var(--muted)">${p.id}</small></td>
-          <td>${p.category}</td>
-          <td>$${p.price.toFixed(2)}</td>
+          <td><strong>${p.product_name}</strong><br><small style="color: var(--muted)">${p.product_code || p.product_id}</small></td>
+          <td>${p.category_id || '-'}</td>
+          <td>$${formatMoney(p.unit_price)}</td>
           <td>
             <div class="qty">
               <button data-dir="-1">-</button>
-              <input type="number" min="1" max="${p.stock}" value="1">
+              <input type="number" min="1" max="${available}" value="1">
               <button data-dir="1">+</button>
             </div>
           </td>
-          <td><button class="btn success" data-id="${p.id}">Add to cart</button></td>
+          <td><button class="btn success" data-id="${p.product_id}">Add to cart</button></td>
         `;
         productsBody.appendChild(row);
 
@@ -348,7 +358,7 @@
         row.querySelectorAll('.qty button').forEach((btn) => {
           btn.addEventListener('click', () => {
             const dir = Number(btn.dataset.dir);
-            const next = Math.min(p.stock, Math.max(1, Number(qtyInput.value) + dir));
+            const next = Math.min(available, Math.max(1, Number(qtyInput.value) + dir));
             qtyInput.value = next;
           });
         });
@@ -369,8 +379,8 @@
         div.className = 'cart-item';
         div.innerHTML = `
           <div>
-            <strong>${item.name}</strong>
-            <div style="color: var(--muted); font-size: 12px;">${item.qty} pcs • $${(item.price * item.qty).toFixed(2)}</div>
+            <strong>${item.product_name}</strong>
+            <div style="color: var(--muted); font-size: 12px;">${item.qty} pcs x $${formatMoney(item.unit_price)}</div>
           </div>
           <span class="badge">In cart</span>
         `;
@@ -380,17 +390,17 @@
 
     function renderStock() {
       stockList.innerHTML = '';
-      sampleProducts.forEach((p) => {
+      products.forEach((p) => {
         const div = document.createElement('div');
         div.className = 'mini';
         div.innerHTML = `
           <div class="flex" style="gap:6px;">
-            <strong>${p.name}</strong>
-            <span class="badge">${p.category}</span>
+            <strong>${p.product_name}</strong>
+            <span class="badge">${p.category_id || 'General'}</span>
           </div>
           <div style="display:flex; justify-content:space-between; color:var(--muted); font-size:13px;">
-            <span>ID: ${p.id}</span>
-            <span>Stock: <strong style="color:var(--text)">${p.stock}</strong></span>
+            <span>ID: ${p.product_code || p.product_id}</span>
+            <span>Stock: <strong style="color:var(--text)">${p.quantity_on_hand}</strong></span>
           </div>
         `;
         stockList.appendChild(div);
@@ -398,43 +408,117 @@
     }
 
     function addToCart(product, qty) {
-      const existing = cart.find((c) => c.id === product.id);
+      if (qty <= 0) {
+        return;
+      }
+      const available = Number(product.quantity_on_hand) || 0;
+      const existing = cart.find((c) => c.product_id === product.product_id);
       if (existing) {
-        existing.qty = Math.min(existing.qty + qty, product.stock);
+        existing.qty = Math.min(existing.qty + qty, available);
       } else {
         cart.push({ ...product, qty });
       }
       status.style.display = 'block';
-      status.textContent = `${product.name} added.`;
+      status.textContent = `${product.product_name} added.`;
       renderCart();
+    }
+
+    async function loadProducts() {
+      try {
+        const data = await App.apiFetch(`/api/inventory?warehouse_id=${warehouseId}`);
+        products = data.items || [];
+        renderProducts(products);
+        renderCart();
+        renderStock();
+      } catch (err) {
+        status.style.display = 'block';
+        status.textContent = err.message || 'Failed to load products.';
+      }
     }
 
     search.addEventListener('input', () => {
       const term = search.value.toLowerCase();
-      const filtered = sampleProducts.filter((p) => p.name.toLowerCase().includes(term) || p.id.toLowerCase().includes(term));
+      const filtered = products.filter((p) =>
+        (p.product_name || '').toLowerCase().includes(term) ||
+        String(p.product_code || '').toLowerCase().includes(term) ||
+        String(p.product_id).includes(term)
+      );
       renderProducts(filtered);
     });
 
     document.getElementById('addFromBarcode').addEventListener('click', () => {
-      const code = document.getElementById('barcode').value.trim();
-      const found = sampleProducts.find((p) => p.id === code);
-      if (found) addToCart(found, 1);
-      status.style.display = 'block';
-      status.textContent = found ? `${code} scanned.` : 'Barcode not found in demo data.';
+      const code = document.getElementById('barcode').value.trim().toLowerCase();
+      const found = products.find((p) =>
+        String(p.barcode || '').toLowerCase() === code ||
+        String(p.product_code || '').toLowerCase() === code
+      );
+      if (found) {
+        addToCart(found, 1);
+        status.textContent = `${code} scanned.`;
+      } else {
+        status.style.display = 'block';
+        status.textContent = 'Barcode not found.';
+      }
     });
 
-    document.getElementById('complete').addEventListener('click', () => {
-      status.style.display = 'block';
-      status.textContent = cart.length ? 'Sale completed (demo only).' : 'Add items before completing.';
+    document.getElementById('complete').addEventListener('click', async () => {
+      if (!cart.length) {
+        status.style.display = 'block';
+        status.textContent = 'Add items before completing.';
+        return;
+      }
+
+      const items = cart.map((item, idx) => {
+        const lineTotal = Number(item.unit_price) * item.qty;
+        const taxRate = Number(item.tax_rate) || 0;
+        const taxAmount = (lineTotal * taxRate) / 100;
+        return {
+          line_number: idx + 1,
+          product_id: item.product_id,
+          quantity: item.qty,
+          unit_price: item.unit_price,
+          discount_amount: 0,
+          tax_amount: taxAmount,
+          line_total: lineTotal + taxAmount
+        };
+      });
+
+      const grossAmount = items.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
+      const taxAmount = items.reduce((sum, item) => sum + item.tax_amount, 0);
+      const totalAmount = items.reduce((sum, item) => sum + item.line_total, 0);
+
+      const payload = {
+        sale_number: `SAL-${Date.now().toString().slice(-8)}`,
+        warehouse_id: Number(warehouseId),
+        items,
+        gross_amount: grossAmount,
+        discount_amount: 0,
+        tax_amount: taxAmount,
+        total_amount: totalAmount,
+        payment_status: 'PAID',
+        status: 'COMPLETED'
+      };
+
+      try {
+        await App.apiFetch('/api/sales', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        cart.length = 0;
+        status.style.display = 'block';
+        status.textContent = 'Sale completed.';
+        await loadProducts();
+      } catch (err) {
+        status.style.display = 'block';
+        status.textContent = err.message || 'Failed to complete sale.';
+      }
     });
 
     document.getElementById('switchMode').addEventListener('click', () => {
       window.location.href = 'warehouse-dashboard.html';
     });
 
-    renderProducts(sampleProducts);
-    renderCart();
-    renderStock();
+    loadProducts();
   </script>
 </body>
 </html>

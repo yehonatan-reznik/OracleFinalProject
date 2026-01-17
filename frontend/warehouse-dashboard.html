@@ -142,20 +142,20 @@
     <div class="card">
       <h2>Low stock</h2>
       <p>Products below threshold</p>
-      <div class="stat">18</div>
+      <div class="stat" id="lowStockCount">0</div>
       <div class="badge" style="background:#fef2f2; color:#b91c1c;">Restock priority</div>
     </div>
     <div class="card">
       <h2>Incoming transfers</h2>
-      <p>Expected by today</p>
-      <div class="stat">6</div>
-      <div class="badge">On the way</div>
+      <p>Pending approvals</p>
+      <div class="stat" id="pendingTransfers">0</div>
+      <div class="badge">Awaiting review</div>
     </div>
     <div class="card">
-      <h2>Today’s received items</h2>
-      <p>Completed receiving sessions</p>
-      <div class="stat">142</div>
-      <div class="badge" style="background:#ecfdf3; color:#15803d;">Verified</div>
+      <h2>Total units</h2>
+      <p>On-hand inventory for this site</p>
+      <div class="stat" id="totalUnits">0</div>
+      <div class="badge" style="background:#ecfdf3; color:#15803d;">In stock</div>
     </div>
   </div>
 
@@ -163,37 +163,73 @@
     <div class="card">
       <h2>Stock trend</h2>
       <p>Week over week inbound/outbound</p>
-      <div class="placeholder">Stock trend graph placeholder</div>
+      <div class="placeholder">No chart data</div>
     </div>
     <div class="card">
       <h2>Alerts</h2>
       <table>
         <thead><tr><th>Item</th><th>Message</th><th>Action</th></tr></thead>
-        <tbody>
-          <tr><td>Printer ink</td><td>Below safety stock</td><td>Reorder</td></tr>
-          <tr><td>HD Webcam</td><td>Pending transfer approval</td><td>Review</td></tr>
-          <tr><td>Pallet 1093</td><td>Awaiting QC</td><td>Inspect</td></tr>
-        </tbody>
+        <tbody id="alertsBody"></tbody>
       </table>
     </div>
   </div>
 
+  <script src="config.js"></script>
+  <script src="app.js"></script>
   <script>
-    if (!localStorage.getItem('user_id')) {
+    if (!App.requireAuth('warehouse-login.html')) {
+      throw new Error('auth required');
+    }
+
+    const { warehouse_id: warehouseId, warehouse_name: warehouseName } = App.getWarehouseContext();
+    if (!warehouseId) {
       window.location.href = 'warehouse-login.html';
+    }
+
+    const badge = document.querySelector('.badge');
+    if (badge) {
+      badge.textContent = `Site: ${warehouseName || 'Assigned'}`;
     }
 
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-        localStorage.clear();
-        window.location.href = 'index.html';
+      logoutBtn.addEventListener('click', () => App.logout());
+    }
+
+    const alertsBody = document.getElementById('alertsBody');
+
+    function setAlerts(items) {
+      alertsBody.innerHTML = '';
+      if (!items.length) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="3">No alerts</td>';
+        alertsBody.appendChild(tr);
+        return;
+      }
+      items.forEach((item) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${item.product_name}</td><td>Below safety stock (${item.quantity_on_hand})</td><td>Reorder</td>`;
+        alertsBody.appendChild(tr);
       });
+    }
+
+    async function loadReport() {
+      try {
+        const data = await App.apiFetch(`/api/reports/warehouse?warehouse_id=${warehouseId}`);
+        document.getElementById('lowStockCount').textContent = data.totals.low_stock || 0;
+        document.getElementById('pendingTransfers').textContent = data.totals.pending_transfers || 0;
+        document.getElementById('totalUnits').textContent = data.totals.total_units || 0;
+        setAlerts(data.alerts || []);
+      } catch (err) {
+        setAlerts([]);
+      }
     }
 
     document.getElementById('switchMode').addEventListener('click', () => {
       window.location.href = 'pos-sales.html';
     });
+
+    loadReport();
   </script>
 </body>
 </html>

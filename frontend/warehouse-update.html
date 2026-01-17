@@ -171,46 +171,51 @@
     <h2>Editable quantities</h2>
     <p>Only managers can adjust available stock counts directly.</p>
     <table>
-      <thead><tr><th>Item</th><th>Branch</th><th>Quantity</th></tr></thead>
+      <thead><tr><th>Item</th><th>SKU</th><th>Quantity</th></tr></thead>
       <tbody id="tableBody"></tbody>
     </table>
     <div class="controls">
       <button class="btn" id="save">Save Changes</button>
-      <div class="status" id="status">Changes saved (demo only).</div>
+      <div class="status" id="status">Changes saved.</div>
     </div>
   </div>
 
+  <script src="config.js"></script>
+  <script src="app.js"></script>
   <script>
-    if (!localStorage.getItem('user_id')) {
+    if (!App.requireAuth('warehouse-login.html')) {
+      throw new Error('auth required');
+    }
+
+    const { warehouse_id: warehouseId } = App.getWarehouseContext();
+    if (!warehouseId) {
       window.location.href = 'warehouse-login.html';
     }
 
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-        localStorage.clear();
-        window.location.href = 'index.html';
-      });
+      logoutBtn.addEventListener('click', () => App.logout());
     }
 
-    const data = [
-      { name: 'LED Monitor 24"', branch: 'Central', qty: 82 },
-      { name: 'Thermal Printer', branch: 'Central', qty: 18 },
-      { name: 'HD Webcam', branch: 'North', qty: 9 },
-      { name: 'Keyboard - Mech', branch: 'South', qty: 44 }
-    ];
     const tableBody = document.getElementById('tableBody');
     const managerToggle = document.getElementById('managerToggle');
     const statusBox = document.getElementById('status');
+    let inventory = [];
 
     function render(disabled) {
       tableBody.innerHTML = '';
-      data.forEach((row, idx) => {
+      if (!inventory.length) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="3">No inventory found</td>';
+        tableBody.appendChild(tr);
+        return;
+      }
+      inventory.forEach((row, idx) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${row.name}</td>
-          <td>${row.branch}</td>
-          <td><input type="number" min="0" value="${row.qty}" data-idx="${idx}" ${disabled ? 'disabled' : ''}></td>
+          <td>${row.product_name}</td>
+          <td>${row.product_code || row.product_id}</td>
+          <td><input type="number" min="0" value="${row.quantity_on_hand}" data-idx="${idx}" ${disabled ? 'disabled' : ''}></td>
         `;
         tableBody.appendChild(tr);
       });
@@ -220,21 +225,67 @@
       render(!managerToggle.checked);
     });
 
-    document.getElementById('save').addEventListener('click', () => {
+    document.getElementById('save').addEventListener('click', async () => {
       if (!managerToggle.checked) {
         statusBox.style.display = 'block';
         statusBox.textContent = 'Enable manager mode to save.';
         return;
       }
+
+      const updates = [];
       document.querySelectorAll('input[data-idx]').forEach((input) => {
         const idx = Number(input.dataset.idx);
-        data[idx].qty = Number(input.value);
+        const qty = Number(input.value);
+        if (!Number.isFinite(qty) || qty < 0) {
+          return;
+        }
+        if (qty !== inventory[idx].quantity_on_hand) {
+          updates.push({
+            product_id: inventory[idx].product_id,
+            quantity_on_hand: qty
+          });
+        }
       });
-      statusBox.style.display = 'block';
-      statusBox.textContent = 'Changes saved (demo only).';
+
+      if (!updates.length) {
+        statusBox.style.display = 'block';
+        statusBox.textContent = 'No changes to save.';
+        return;
+      }
+
+      try {
+        for (const update of updates) {
+          await App.apiFetch('/api/inventory/adjust', {
+            method: 'POST',
+            body: JSON.stringify({
+              warehouse_id: Number(warehouseId),
+              product_id: update.product_id,
+              quantity_on_hand: update.quantity_on_hand
+            })
+          });
+        }
+        statusBox.style.display = 'block';
+        statusBox.textContent = 'Changes saved.';
+        await loadInventory();
+      } catch (err) {
+        statusBox.style.display = 'block';
+        statusBox.textContent = err.message || 'Failed to save changes.';
+      }
     });
 
+    async function loadInventory() {
+      try {
+        const data = await App.apiFetch(`/api/inventory?warehouse_id=${warehouseId}`);
+        inventory = data.items || [];
+        render(!managerToggle.checked);
+      } catch (err) {
+        statusBox.style.display = 'block';
+        statusBox.textContent = err.message || 'Failed to load inventory.';
+      }
+    }
+
     render(true);
+    loadInventory();
 
     document.getElementById('switchMode').addEventListener('click', () => {
       window.location.href = 'pos-sales.html';

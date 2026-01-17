@@ -170,34 +170,103 @@
         </select>
       </div>
       <button class="btn" id="send">Send Transfer Request</button>
-      <div class="status" id="status">Request sent (demo only).</div>
+      <div class="status" id="status">Request sent.</div>
     </div>
   </div>
 
+  <script src="config.js"></script>
+  <script src="app.js"></script>
   <script>
-    if (!localStorage.getItem('user_id')) {
+    if (!App.requireAuth('warehouse-login.html')) {
+      throw new Error('auth required');
+    }
+
+    const { warehouse_id: warehouseId, company_id: companyId } = App.getWarehouseContext();
+    if (!warehouseId || !companyId) {
       window.location.href = 'warehouse-login.html';
     }
 
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-        localStorage.clear();
-        window.location.href = 'index.html';
+      logoutBtn.addEventListener('click', () => App.logout());
+    }
+
+    const productSelect = document.getElementById('product');
+    const qtyInput = document.getElementById('qty');
+    const branchSelect = document.getElementById('branch');
+    const status = document.getElementById('status');
+
+    function setSelectOptions(select, items, labelKey, valueKey, placeholder) {
+      select.innerHTML = '';
+      const ph = document.createElement('option');
+      ph.value = '';
+      ph.textContent = placeholder;
+      ph.disabled = true;
+      ph.selected = true;
+      select.appendChild(ph);
+      items.forEach((item) => {
+        const option = document.createElement('option');
+        option.value = item[valueKey];
+        option.textContent = item[labelKey];
+        select.appendChild(option);
       });
     }
 
-    document.getElementById('send').addEventListener('click', () => {
-      const product = document.getElementById('product').value;
-      const qty = document.getElementById('qty').value;
-      const branch = document.getElementById('branch').value;
-      const status = document.getElementById('status');
-      status.style.display = 'block';
-      status.textContent = `Transfer requested: ${qty} of ${product} to ${branch}.`;
+    async function loadProducts() {
+      const data = await App.apiFetch(`/api/inventory?warehouse_id=${warehouseId}`);
+      const items = data.items || [];
+      setSelectOptions(productSelect, items, 'product_name', 'product_id', 'Select product');
+    }
+
+    async function loadWarehouses() {
+      const data = await App.apiFetch(`/api/warehouses?company_id=${companyId}`);
+      const items = (data.warehouses || []).filter((w) => String(w.warehouse_id) !== String(warehouseId));
+      setSelectOptions(branchSelect, items, 'warehouse_name', 'warehouse_id', 'Select warehouse');
+    }
+
+    document.getElementById('send').addEventListener('click', async () => {
+      status.style.display = 'none';
+      if (!productSelect.value || !branchSelect.value) {
+        status.style.display = 'block';
+        status.textContent = 'Select product and target warehouse.';
+        return;
+      }
+      if (!Number.isFinite(Number(qtyInput.value)) || Number(qtyInput.value) <= 0) {
+        status.style.display = 'block';
+        status.textContent = 'Enter a valid quantity.';
+        return;
+      }
+      const payload = {
+        from_warehouse_id: Number(warehouseId),
+        to_warehouse_id: Number(branchSelect.value),
+        items: [
+          {
+            product_id: Number(productSelect.value),
+            quantity: Number(qtyInput.value)
+          }
+        ]
+      };
+
+      try {
+        await App.apiFetch('/api/transfers', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        status.style.display = 'block';
+        status.textContent = 'Transfer request sent.';
+      } catch (err) {
+        status.style.display = 'block';
+        status.textContent = err.message || 'Failed to send request.';
+      }
     });
 
     document.getElementById('switchMode').addEventListener('click', () => {
       window.location.href = 'pos-sales.html';
+    });
+
+    Promise.all([loadProducts(), loadWarehouses()]).catch((err) => {
+      status.style.display = 'block';
+      status.textContent = err.message || 'Failed to load data.';
     });
   </script>
 </body>

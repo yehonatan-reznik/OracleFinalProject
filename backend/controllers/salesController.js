@@ -10,8 +10,8 @@ async function createSale(req, res) {
   const {
     sale_number: saleNumber,
     customer_id: customerId,
-    cashier_id: cashierId,
-    warehouse_id: warehouseId,
+    cashier_id: cashierIdRaw,
+    warehouse_id: warehouseIdRaw,
     gross_amount: grossAmountRaw,
     discount_amount: discountAmountRaw,
     tax_amount: taxAmountRaw,
@@ -22,10 +22,25 @@ async function createSale(req, res) {
     items,
   } = req.body || {};
 
-  if (!saleNumber || !cashierId || !warehouseId || !Array.isArray(items)) {
+  const warehouseId = warehouseIdRaw || req.user?.warehouse_id;
+  const cashierId = req.user?.user_id || cashierIdRaw;
+
+  const numericWarehouseId = Number(warehouseId);
+  if (!Number.isFinite(numericWarehouseId)) {
+    return res.status(400).json({ error: "warehouse_id is required" });
+  }
+
+  if (!saleNumber || !cashierId || !Array.isArray(items)) {
     return res.status(400).json({
       error: "sale_number, cashier_id, warehouse_id, and items are required",
     });
+  }
+
+  if (
+    req.user?.warehouse_id &&
+    Number(req.user.warehouse_id) !== numericWarehouseId
+  ) {
+    return res.status(403).json({ error: "warehouse scope mismatch" });
   }
 
   if (items.length === 0) {
@@ -97,7 +112,9 @@ async function createSale(req, res) {
           total_amount,
           payment_status,
           status,
-          notes
+          notes,
+          created_at,
+          updated_at
         )
         VALUES (
           :sale_number,
@@ -111,7 +128,9 @@ async function createSale(req, res) {
           :total_amount,
           :payment_status,
           :status,
-          :notes
+          :notes,
+          SYSTIMESTAMP,
+          SYSTIMESTAMP
         )
         RETURNING sale_id INTO :sale_id
       `,
@@ -119,7 +138,7 @@ async function createSale(req, res) {
         sale_number: saleNumber,
         customer_id: customerId || null,
         cashier_id: cashierId,
-        warehouse_id: warehouseId,
+        warehouse_id: numericWarehouseId,
         gross_amount: grossAmount,
         discount_amount: discountAmount,
         tax_amount: taxAmount,
@@ -154,7 +173,9 @@ async function createSale(req, res) {
           unit_price,
           discount_amount,
           tax_amount,
-          line_total
+          line_total,
+          created_at,
+          updated_at
         )
         VALUES (
           :sale_id,
@@ -164,7 +185,9 @@ async function createSale(req, res) {
           :unit_price,
           :discount_amount,
           :tax_amount,
-          :line_total
+          :line_total,
+          SYSTIMESTAMP,
+          SYSTIMESTAMP
         )
       `,
       saleItemBinds,
@@ -196,7 +219,7 @@ async function createSale(req, res) {
         {
           quantity: item.quantity,
           product_id: item.product_id,
-          warehouse_id: warehouseId,
+          warehouse_id: numericWarehouseId,
         }
       );
 

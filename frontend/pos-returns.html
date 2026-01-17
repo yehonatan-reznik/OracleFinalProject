@@ -196,51 +196,62 @@
         </select>
       </div>
       <button class="btn" id="process">Process Return</button>
-      <div class="status" id="status">Return saved (demo only).</div>
+      <div class="status" id="status">Return saved.</div>
     </div>
   </div>
 
+  <script src="config.js"></script>
+  <script src="app.js"></script>
   <script>
-    if (!localStorage.getItem('user_id')) {
+    if (!App.requireAuth('pos-login.html')) {
+      throw new Error('auth required');
+    }
+
+    const { warehouse_id: warehouseId, warehouse_name: warehouseName } = App.getWarehouseContext();
+    if (!warehouseId) {
       window.location.href = 'pos-login.html';
+    }
+
+    const branchPill = document.querySelector('.pill');
+    if (branchPill) {
+      branchPill.textContent = `Branch: ${warehouseName || 'Assigned'}`;
     }
 
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-        localStorage.clear();
-        window.location.href = 'index.html';
-      });
+      logoutBtn.addEventListener('click', () => App.logout());
     }
 
-    const sample = [
-      { id: 'RET-1021', name: 'Wireless Mouse', reason: 'Unwanted', status: 'Eligible' },
-      { id: 'RET-1022', name: 'USB-C Cable', reason: 'Damaged plug', status: 'Eligible' },
-      { id: 'RET-1023', name: 'Laptop Stand', reason: 'Wrong height', status: 'Eligible' }
-    ];
     const results = document.getElementById('results');
     const search = document.getElementById('search');
     const statusBox = document.getElementById('status');
-    let selected = sample[0];
+    const qtyInput = document.getElementById('qty');
+    const conditionSelect = document.getElementById('condition');
+    let products = [];
+    let selected = null;
 
     function render(list) {
       results.innerHTML = '';
+      if (!list.length) {
+        results.innerHTML = '<div class="item">No products found</div>';
+        return;
+      }
       list.forEach((item) => {
         const div = document.createElement('div');
         div.className = 'item';
         div.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
-              <strong>${item.name}</strong>
-              <div style="color:var(--muted); font-size:12px;">Ref: ${item.id} • Reason: ${item.reason}</div>
+              <strong>${item.product_name}</strong>
+              <div style="color:var(--muted); font-size:12px;">Ref: ${item.product_code || item.product_id}</div>
             </div>
-            <span class="pill">${item.status}</span>
+            <span class="pill">Stock: ${item.quantity_on_hand}</span>
           </div>
         `;
         div.addEventListener('click', () => {
           selected = item;
           statusBox.style.display = 'block';
-          statusBox.textContent = `${item.name} selected for return.`;
+          statusBox.textContent = `${item.product_name} selected for return.`;
         });
         results.appendChild(div);
       });
@@ -248,22 +259,69 @@
 
     search.addEventListener('input', () => {
       const term = search.value.toLowerCase();
-      const filtered = sample.filter((s) => s.name.toLowerCase().includes(term) || s.id.toLowerCase().includes(term));
+      const filtered = products.filter((p) =>
+        (p.product_name || '').toLowerCase().includes(term) ||
+        String(p.product_code || '').toLowerCase().includes(term) ||
+        String(p.product_id).includes(term)
+      );
       render(filtered);
     });
 
-    document.getElementById('process').addEventListener('click', () => {
-      const qty = document.getElementById('qty').value;
-      const condition = document.getElementById('condition').value;
-      statusBox.style.display = 'block';
-      statusBox.textContent = `Return logged: ${selected?.name || 'Item'} • Qty ${qty} • Condition ${condition}.`;
+    document.getElementById('process').addEventListener('click', async () => {
+      if (!selected) {
+        statusBox.style.display = 'block';
+        statusBox.textContent = 'Select a product first.';
+        return;
+      }
+      const qty = Number(qtyInput.value);
+      if (!Number.isFinite(qty) || qty <= 0) {
+        statusBox.style.display = 'block';
+        statusBox.textContent = 'Enter a valid quantity.';
+        return;
+      }
+      const reason = conditionSelect.value;
+
+      try {
+        await App.apiFetch('/api/returns', {
+          method: 'POST',
+          body: JSON.stringify({
+            warehouse_id: Number(warehouseId),
+            reason,
+            items: [
+              {
+                product_id: selected.product_id,
+                quantity: qty,
+                unit_price: selected.unit_price || 0,
+                tax_amount: 0,
+                line_total: (selected.unit_price || 0) * qty
+              }
+            ]
+          })
+        });
+        statusBox.style.display = 'block';
+        statusBox.textContent = `Return logged: ${selected.product_name}, Qty ${qty}.`;
+      } catch (err) {
+        statusBox.style.display = 'block';
+        statusBox.textContent = err.message || 'Failed to log return.';
+      }
     });
 
     document.getElementById('switchMode').addEventListener('click', () => {
       window.location.href = 'warehouse-dashboard.html';
     });
 
-    render(sample);
+    async function loadProducts() {
+      try {
+        const data = await App.apiFetch(`/api/inventory?warehouse_id=${warehouseId}`);
+        products = data.items || [];
+        render(products);
+      } catch (err) {
+        statusBox.style.display = 'block';
+        statusBox.textContent = err.message || 'Failed to load products.';
+      }
+    }
+
+    loadProducts();
   </script>
 </body>
 </html>

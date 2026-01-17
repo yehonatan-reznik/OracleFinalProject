@@ -133,10 +133,11 @@
     </form>
   </div>
 
+  <script src="config.js"></script>
+  <script src="app.js"></script>
   <script>
     const form = document.getElementById('registerForm');
     const status = document.getElementById('status');
-    const backendUrl = 'http://localhost:3001';
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -152,48 +153,17 @@
       };
 
       try {
-        const response = await fetch(`${backendUrl}/api/auth/register`, {
+        await App.apiFetch('/api/auth/register', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-
-        if (response.status === 409) {
-          status.textContent = 'User already exists';
-          status.style.display = 'block';
-          return;
-        }
-        if (!response.ok) {
-          status.textContent = 'Registration failed';
-          status.style.display = 'block';
-          return;
-        }
-
-        const data = await response.json();
-
-        if (data && data.token) {
-          const user = data.user || data;
-          localStorage.setItem('user_id', user.user_id || '');
-          localStorage.setItem('email', user.email || payload.email);
-          localStorage.setItem('role', user.role || '');
-          localStorage.setItem('token', data.token);
-
-          if (user.role === 'POS') {
-            window.location.href = 'pos-sales.html';
-          } else if (user.role === 'WAREHOUSE') {
-            window.location.href = 'warehouse-dashboard.html';
-          } else {
-            window.location.href = 'index.html';
-          }
-          return;
-        }
 
         status.textContent = 'Registration successful. Please log in.';
         status.classList.add('ok');
         status.style.display = 'block';
         form.reset();
       } catch (err) {
-        status.textContent = 'Registration failed';
+        status.textContent = err.message || 'Registration failed';
         status.style.display = 'block';
       }
     });

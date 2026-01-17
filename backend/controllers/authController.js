@@ -3,8 +3,72 @@ const jwt = require("jsonwebtoken");
 const oracledb = require("oracledb");
 const { getConnection } = require("../db");
 
+async function fetchCompany(connection, companyName) {
+  if (!companyName) {
+    return null;
+  }
+  const result = await connection.execute(
+    `
+      select company_id,
+             company_name
+        from companies
+       where lower(company_name) = lower(:company_name)
+         and is_deleted = 'N'
+         and is_active = 'Y'
+    `,
+    { company_name: companyName },
+    { outFormat: oracledb.OUT_FORMAT_OBJECT }
+  );
+  return result.rows[0] || null;
+}
+
+async function fetchWarehouse(
+  connection,
+  { warehouseId, warehouseCode, warehouseName, companyId }
+) {
+  if (!warehouseId && !warehouseCode && !warehouseName) {
+    return null;
+  }
+
+  const result = await connection.execute(
+    `
+      select w.warehouse_id,
+             w.warehouse_code,
+             w.warehouse_name,
+             w.company_id,
+             c.company_name
+        from warehouses w
+        left join companies c on c.company_id = w.company_id
+       where w.is_deleted = 'N'
+         and w.is_active = 'Y'
+         and (
+           w.warehouse_id = :warehouse_id
+           or lower(w.warehouse_code) = lower(:warehouse_code)
+           or lower(w.warehouse_name) = lower(:warehouse_name)
+         )
+         and (:company_id is null or w.company_id = :company_id)
+       fetch first 1 row only
+    `,
+    {
+      warehouse_id: warehouseId || null,
+      warehouse_code: warehouseCode || null,
+      warehouse_name: warehouseName || null,
+      company_id: companyId || null,
+    },
+    { outFormat: oracledb.OUT_FORMAT_OBJECT }
+  );
+  return result.rows[0] || null;
+}
+
 async function login(req, res) {
-  const { identifier, password } = req.body || {};
+  const {
+    identifier,
+    password,
+    company_name: companyNameRaw,
+    warehouse_id: warehouseId,
+    warehouse_code: warehouseCodeRaw,
+    warehouse_name: warehouseNameRaw,
+  } = req.body || {};
   if (!identifier || !password) {
     return res.status(400).json({ error: "identifier and password required" });
   }
@@ -51,12 +115,49 @@ async function login(req, res) {
       return res.status(500).json({ error: "jwt secret not configured" });
     }
 
+    const companyName = (companyNameRaw || "").trim();
+    const warehouseCode = (warehouseCodeRaw || "").trim();
+    const warehouseName = (warehouseNameRaw || "").trim();
+
+    let company = await fetchCompany(connection, companyName);
+    let warehouse = await fetchWarehouse(connection, {
+      warehouseId,
+      warehouseCode,
+      warehouseName,
+      companyId: company?.COMPANY_ID || null,
+    });
+
+    if (warehouse && !company && warehouse.COMPANY_ID) {
+      company = {
+        COMPANY_ID: warehouse.COMPANY_ID,
+        COMPANY_NAME: warehouse.COMPANY_NAME || null,
+      };
+    }
+
+    if (user.ROLE === "WAREHOUSE") {
+      if (!company?.COMPANY_ID || !warehouse) {
+        return res.status(400).json({
+          error: "company_name and warehouse are required for warehouse login",
+        });
+      }
+    }
+
+    if (user.ROLE === "POS") {
+      if (!warehouse) {
+        return res.status(400).json({
+          error: "warehouse is required for POS login",
+        });
+      }
+    }
+
     const token = jwt.sign(
       {
         user_id: user.USER_ID,
         username: user.USERNAME,
         email: user.EMAIL,
         role: user.ROLE,
+        company_id: company?.COMPANY_ID || null,
+        warehouse_id: warehouse?.WAREHOUSE_ID || null,
       },
       jwt_secret,
       { expiresIn: "7d" }
@@ -68,6 +169,11 @@ async function login(req, res) {
       email: user.EMAIL,
       full_name: user.FULL_NAME,
       role: user.ROLE,
+      company_id: company?.COMPANY_ID || null,
+      company_name: company?.COMPANY_NAME || null,
+      warehouse_id: warehouse?.WAREHOUSE_ID || null,
+      warehouse_code: warehouse?.WAREHOUSE_CODE || null,
+      warehouse_name: warehouse?.WAREHOUSE_NAME || null,
       token,
     });
   } catch (err) {
@@ -94,11 +200,6 @@ async function register(req, res) {
   }
   if (password.length < 6) {
     return res.status(400).json({ error: "password too short" });
-  }
-
-  const jwt_secret = process.env.jwt_secret || process.env.JWT_SECRET;
-  if (!jwt_secret) {
-    return res.status(500).json({ error: "jwt secret not configured" });
   }
 
   let connection;
@@ -175,24 +276,12 @@ async function register(req, res) {
 
     await connection.commit();
 
-    const token = jwt.sign(
-      {
-        user_id: next_id,
-        username,
-        email,
-        role,
-      },
-      jwt_secret,
-      { expiresIn: "7d" }
-    );
-
     return res.status(201).json({
       user_id: next_id,
       username,
       email,
       full_name,
       role,
-      token,
     });
   } catch (err) {
     if (connection) {

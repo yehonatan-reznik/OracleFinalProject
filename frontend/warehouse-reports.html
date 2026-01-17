@@ -157,38 +157,96 @@
       <button class="btn" data-type="Stock discrepancies">Stock discrepancies</button>
       <button class="btn" data-type="Transfers history">Transfers history</button>
     </div>
-    <div class="placeholder" id="placeholder">Table placeholder</div>
-    <div class="status" id="status">Report ready (demo placeholder).</div>
+    <div class="placeholder" id="placeholder">Select a report</div>
+    <div class="status" id="status">Report ready.</div>
     <table>
       <thead><tr><th>Ref</th><th>Title</th><th>Date</th><th>Status</th></tr></thead>
-      <tbody>
-        <tr><td>RPT-441</td><td>Received goods - Central</td><td>2025-11-24</td><td>Ready</td></tr>
-        <tr><td>RPT-442</td><td>Stock discrepancy - Midtown</td><td>2025-11-23</td><td>Ready</td></tr>
-        <tr><td>RPT-443</td><td>Transfers history - Q4</td><td>2025-11-22</td><td>Processing</td></tr>
-      </tbody>
+      <tbody id="reportBody"></tbody>
     </table>
   </div>
 
+  <script src="config.js"></script>
+  <script src="app.js"></script>
   <script>
-    if (!localStorage.getItem('user_id')) {
+    if (!App.requireAuth('warehouse-login.html')) {
+      throw new Error('auth required');
+    }
+
+    const { warehouse_id: warehouseId } = App.getWarehouseContext();
+    if (!warehouseId) {
       window.location.href = 'warehouse-login.html';
     }
 
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-        localStorage.clear();
-        window.location.href = 'index.html';
-      });
+      logoutBtn.addEventListener('click', () => App.logout());
     }
 
     const placeholder = document.getElementById('placeholder');
     const status = document.getElementById('status');
+    const reportBody = document.getElementById('reportBody');
+
+    function setRows(rows) {
+      reportBody.innerHTML = '';
+      if (!rows.length) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td colspan="4">No data available</td>';
+        reportBody.appendChild(tr);
+        return;
+      }
+      rows.forEach((row) => reportBody.appendChild(row));
+    }
+
+    async function loadReceipts() {
+      const data = await App.apiFetch(`/api/receipts?warehouse_id=${warehouseId}`);
+      const rows = (data.receipts || []).map((item) => {
+        const tr = document.createElement('tr');
+        const received = item.received_at ? new Date(item.received_at).toLocaleDateString() : '-';
+        tr.innerHTML = `<td>${item.receipt_number}</td><td>${item.product_name}</td><td>${received}</td><td>Received</td>`;
+        return tr;
+      });
+      setRows(rows);
+    }
+
+    async function loadDiscrepancies() {
+      const data = await App.apiFetch(`/api/inventory?warehouse_id=${warehouseId}`);
+      const lowStock = (data.items || []).filter((item) => Number(item.quantity_on_hand) <= 10);
+      const rows = lowStock.map((item) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${item.product_id}</td><td>${item.product_name}</td><td>-</td><td>Low stock (${item.quantity_on_hand})</td>`;
+        return tr;
+      });
+      setRows(rows);
+    }
+
+    async function loadTransfers() {
+      const data = await App.apiFetch(`/api/transfers?warehouse_id=${warehouseId}`);
+      const rows = (data.transfers || []).map((item) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${item.transfer_number}</td><td>${item.from_warehouse_name} -> ${item.to_warehouse_name}</td><td>${item.created_at ? new Date(item.created_at).toLocaleDateString() : '-'}</td><td>${item.status}</td>`;
+        return tr;
+      });
+      setRows(rows);
+    }
+
     document.querySelectorAll('.btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        placeholder.textContent = `${btn.dataset.type} report placeholder`;
-        status.style.display = 'block';
-        status.textContent = `${btn.dataset.type} prepared (demo only).`;
+      btn.addEventListener('click', async () => {
+        placeholder.textContent = `${btn.dataset.type} report`;
+        status.style.display = 'none';
+        try {
+          if (btn.dataset.type === 'Received goods') {
+            await loadReceipts();
+          } else if (btn.dataset.type === 'Stock discrepancies') {
+            await loadDiscrepancies();
+          } else {
+            await loadTransfers();
+          }
+          status.style.display = 'block';
+          status.textContent = 'Report ready.';
+        } catch (err) {
+          status.style.display = 'block';
+          status.textContent = err.message || 'Failed to load report.';
+        }
       });
     });
 

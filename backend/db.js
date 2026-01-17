@@ -2,11 +2,6 @@ const oracledb = require("oracledb");
 
 require("dotenv").config();
 
-console.log("db_user from env:", process.env.db_user);
-console.log("db_password length:", (process.env.db_password || "").length);
-console.log("cwd:", process.cwd());
-console.log("env file loaded:", require("path").resolve(".env"));
-
 if (process.env.tns_admin) {
   process.env.TNS_ADMIN = process.env.tns_admin;
 }
@@ -15,7 +10,7 @@ if (process.env.oci_lib_dir) {
   oracledb.initOracleClient({ libDir: process.env.oci_lib_dir });
 }
 
-oracledb.outFormat = oracledb.outFormat || oracledb.OUT_FORMAT_OBJECT;
+oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
 
 let pool;
 

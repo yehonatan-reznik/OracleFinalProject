@@ -165,7 +165,7 @@
       <form id="receiveForm">
         <div>
           <label for="product">Product</label>
-          <input id="product" type="text" placeholder="e.g., PRD-009 - LED Monitor" required>
+          <select id="product" required></select>
         </div>
         <div>
           <label for="quantity">Quantity</label>
@@ -173,14 +173,14 @@
         </div>
         <div>
           <label for="supplier">Supplier</label>
-          <input id="supplier" type="text" placeholder="BlueTech Supplies" required>
+          <select id="supplier"></select>
         </div>
         <div>
           <label for="date">Date</label>
           <input id="date" type="date" required>
         </div>
         <button class="btn" type="submit">Receive Goods</button>
-        <div class="status" id="status">Inbound recorded (demo only).</div>
+        <div class="status" id="status">Inbound recorded.</div>
       </form>
     </div>
 
@@ -189,49 +189,131 @@
       <table>
         <thead><tr><th>Ref</th><th>Product</th><th>Qty</th><th>Supplier</th></tr></thead>
         <tbody id="recent">
-          <tr><td>RCV-2031</td><td>Thermal Paper</td><td>40</td><td>PaperWorks</td></tr>
-          <tr><td>RCV-2032</td><td>Wireless Mouse</td><td>80</td><td>North Supply</td></tr>
-          <tr><td>RCV-2033</td><td>Laptop Stand</td><td>22</td><td>PrimeLogix</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 
+  <script src="config.js"></script>
+  <script src="app.js"></script>
   <script>
-    if (!localStorage.getItem('user_id')) {
+    if (!App.requireAuth('warehouse-login.html')) {
+      throw new Error('auth required');
+    }
+
+    const { warehouse_id: warehouseId } = App.getWarehouseContext();
+    if (!warehouseId) {
       window.location.href = 'warehouse-login.html';
     }
 
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-        localStorage.clear();
-        window.location.href = 'index.html';
-      });
+      logoutBtn.addEventListener('click', () => App.logout());
     }
 
     const form = document.getElementById('receiveForm');
     const status = document.getElementById('status');
     const recent = document.getElementById('recent');
-    document.getElementById('date').valueAsDate = new Date();
+    const productSelect = document.getElementById('product');
+    const supplierSelect = document.getElementById('supplier');
+    const dateInput = document.getElementById('date');
+    dateInput.valueAsDate = new Date();
 
-    form.addEventListener('submit', (e) => {
+    function setSelectOptions(select, items, labelKey, valueKey, includeBlank) {
+      select.innerHTML = '';
+      if (includeBlank) {
+        const blank = document.createElement('option');
+        blank.value = '';
+        blank.textContent = 'None';
+        select.appendChild(blank);
+      }
+      items.forEach((item) => {
+        const option = document.createElement('option');
+        option.value = item[valueKey];
+        option.textContent = item[labelKey];
+        select.appendChild(option);
+      });
+    }
+
+    async function loadProducts() {
+      const data = await App.apiFetch(`/api/inventory?warehouse_id=${warehouseId}`);
+      const items = data.items || [];
+      setSelectOptions(productSelect, items, 'product_name', 'product_id');
+    }
+
+    async function loadSuppliers() {
+      try {
+        const data = await App.apiFetch('/api/suppliers');
+        setSelectOptions(supplierSelect, data.suppliers || [], 'supplier_name', 'supplier_id', true);
+      } catch (err) {
+        setSelectOptions(supplierSelect, [], 'supplier_name', 'supplier_id', true);
+      }
+    }
+
+    async function loadReceipts() {
+      try {
+        const data = await App.apiFetch(`/api/receipts?warehouse_id=${warehouseId}`);
+        recent.innerHTML = '';
+        const rows = data.receipts || [];
+        if (!rows.length) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = '<td colspan="4">No receipts yet</td>';
+          recent.appendChild(tr);
+          return;
+        }
+        rows.forEach((row) => {
+          const tr = document.createElement('tr');
+          const received = row.received_at ? new Date(row.received_at).toLocaleDateString() : '';
+          tr.innerHTML = `<td>${row.receipt_number}</td><td>${row.product_name}</td><td>${row.quantity}</td><td>${row.supplier_name || '-'}</td>`;
+          tr.title = received;
+          recent.appendChild(tr);
+        });
+      } catch (err) {
+        recent.innerHTML = '<tr><td colspan="4">Failed to load receipts</td></tr>';
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const product = document.getElementById('product').value;
-      const qty = document.getElementById('quantity').value;
-      const supplier = document.getElementById('supplier').value;
-      const ref = 'RCV-' + Math.floor(Math.random() * 9000 + 1000);
-      const row = document.createElement('tr');
-      row.innerHTML = `<td>${ref}</td><td>${product}</td><td>${qty}</td><td>${supplier}</td>`;
-      recent.prepend(row);
-      status.style.display = 'block';
-      status.textContent = `Received ${qty} of ${product}.`;
-      form.reset();
-      document.getElementById('date').valueAsDate = new Date();
+      status.style.display = 'none';
+
+      if (!productSelect.value) {
+        status.style.display = 'block';
+        status.textContent = 'Select a product.';
+        return;
+      }
+
+      const payload = {
+        warehouse_id: Number(warehouseId),
+        product_id: Number(productSelect.value),
+        quantity: Number(document.getElementById('quantity').value),
+        supplier_id: supplierSelect.value ? Number(supplierSelect.value) : null,
+        received_at: dateInput.value
+      };
+
+      try {
+        await App.apiFetch('/api/inventory/receive', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+        status.style.display = 'block';
+        status.textContent = 'Inbound recorded.';
+        form.reset();
+        dateInput.valueAsDate = new Date();
+        await loadReceipts();
+      } catch (err) {
+        status.style.display = 'block';
+        status.textContent = err.message || 'Failed to record receipt.';
+      }
     });
 
     document.getElementById('switchMode').addEventListener('click', () => {
       window.location.href = 'pos-sales.html';
+    });
+
+    Promise.all([loadProducts(), loadSuppliers(), loadReceipts()]).catch(() => {
+      status.style.display = 'block';
+      status.textContent = 'Failed to load form data.';
     });
   </script>
 </body>
