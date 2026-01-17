@@ -178,17 +178,9 @@
           <label for="password">Password</label>
           <input type="password" id="password" placeholder="********" required>
         </div>
-        <div>
-          <label for="company">Company</label>
-          <select id="company" required></select>
-        </div>
-        <div>
-          <label for="warehouse">Warehouse</label>
-          <select id="warehouse" required></select>
-        </div>
         <button type="submit">Login</button>
         <div class="row">
-          <span id="siteLabel">Site: Select warehouse</span>
+          <span id="siteLabel">Site: Assigned at registration</span>
           <span class="badge">Warehouse</span>
         </div>
         <div class="row">
@@ -207,75 +199,15 @@
     const status = document.getElementById('status');
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
-    const companySelect = document.getElementById('company');
-    const warehouseSelect = document.getElementById('warehouse');
     const siteLabel = document.getElementById('siteLabel');
-
-    function setSelectOptions(select, items, labelKey, valueKey) {
-      select.innerHTML = '';
-      const placeholder = document.createElement('option');
-      placeholder.value = '';
-      placeholder.textContent = 'Select';
-      placeholder.disabled = true;
-      placeholder.selected = true;
-      select.appendChild(placeholder);
-
-      items.forEach((item) => {
-        const option = document.createElement('option');
-        option.value = item[valueKey];
-        option.textContent = item[labelKey];
-        select.appendChild(option);
-      });
-    }
-
-    async function loadCompanies() {
-      const data = await App.apiFetch('/api/companies');
-      setSelectOptions(companySelect, data.companies || [], 'company_name', 'company_id');
-    }
-
-    async function loadWarehouses(companyId) {
-      if (!companyId) {
-        warehouseSelect.innerHTML = '';
-        siteLabel.textContent = 'Site: Select warehouse';
-        return;
-      }
-      const data = await App.apiFetch(`/api/warehouses?company_id=${companyId}`);
-      setSelectOptions(
-        warehouseSelect,
-        data.warehouses || [],
-        'warehouse_name',
-        'warehouse_id'
-      );
-    }
-
-    companySelect.addEventListener('change', () => {
-      loadWarehouses(companySelect.value);
-    });
-
-    warehouseSelect.addEventListener('change', () => {
-      const name = warehouseSelect.options[warehouseSelect.selectedIndex]?.textContent;
-      siteLabel.textContent = name ? `Site: ${name}` : 'Site: Select warehouse';
-    });
-
-    loadCompanies().catch((err) => {
-      status.textContent = err.message || 'Failed to load companies';
-      status.style.display = 'block';
-    });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       status.style.display = 'none';
-      if (!companySelect.value || !warehouseSelect.value) {
-        status.textContent = 'Select company and warehouse.';
-        status.style.display = 'block';
-        return;
-      }
 
       const payload = {
         identifier: emailInput.value.trim(),
-        password: passwordInput.value,
-        company_name: companySelect.options[companySelect.selectedIndex]?.textContent || '',
-        warehouse_id: warehouseSelect.value
+        password: passwordInput.value
       };
 
       try {

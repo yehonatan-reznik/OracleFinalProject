@@ -118,6 +118,14 @@
         <input type="password" id="password" minlength="6" required>
       </div>
       <div>
+        <label for="company_name">Company</label>
+        <input type="text" id="company_name" placeholder="Your Company" required>
+      </div>
+      <div>
+        <label for="warehouse_name">Warehouse</label>
+        <input type="text" id="warehouse_name" placeholder="Main Warehouse" required>
+      </div>
+      <div>
         <label for="role">Role</label>
         <select id="role" required>
           <option value="POS">POS</option>
@@ -149,7 +157,9 @@
         email: document.getElementById('email').value.trim(),
         password: document.getElementById('password').value,
         full_name: document.getElementById('full_name').value.trim(),
-        role: document.getElementById('role').value
+        role: document.getElementById('role').value,
+        company_name: document.getElementById('company_name').value.trim(),
+        warehouse_name: document.getElementById('warehouse_name').value.trim()
       };
 
       try {

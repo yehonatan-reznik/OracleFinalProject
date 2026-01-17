@@ -60,6 +60,30 @@ async function fetchWarehouse(
   return result.rows[0] || null;
 }
 
+async function fetchUserContext(connection, userId) {
+  if (!userId) {
+    return null;
+  }
+
+  const result = await connection.execute(
+    `
+      select uwa.company_id,
+             c.company_name,
+             uwa.warehouse_id,
+             w.warehouse_code,
+             w.warehouse_name
+        from user_warehouse_access uwa
+        join companies c on c.company_id = uwa.company_id
+        join warehouses w on w.warehouse_id = uwa.warehouse_id
+       where uwa.user_id = :user_id
+    `,
+    { user_id: userId },
+    { outFormat: oracledb.OUT_FORMAT_OBJECT }
+  );
+
+  return result.rows[0] || null;
+}
+
 async function login(req, res) {
   const {
     identifier,
@@ -119,25 +143,46 @@ async function login(req, res) {
     const warehouseCode = (warehouseCodeRaw || "").trim();
     const warehouseName = (warehouseNameRaw || "").trim();
 
-    let company = await fetchCompany(connection, companyName);
-    let warehouse = await fetchWarehouse(connection, {
-      warehouseId,
-      warehouseCode,
-      warehouseName,
-      companyId: company?.COMPANY_ID || null,
-    });
+    let company = null;
+    let warehouse = null;
 
-    if (warehouse && !company && warehouse.COMPANY_ID) {
-      company = {
-        COMPANY_ID: warehouse.COMPANY_ID,
-        COMPANY_NAME: warehouse.COMPANY_NAME || null,
-      };
+    if (companyName || warehouseId || warehouseCode || warehouseName) {
+      company = await fetchCompany(connection, companyName);
+      warehouse = await fetchWarehouse(connection, {
+        warehouseId,
+        warehouseCode,
+        warehouseName,
+        companyId: company?.COMPANY_ID || null,
+      });
+
+      if (warehouse && !company && warehouse.COMPANY_ID) {
+        company = {
+          COMPANY_ID: warehouse.COMPANY_ID,
+          COMPANY_NAME: warehouse.COMPANY_NAME || null,
+        };
+      }
+    } else {
+      const context = await fetchUserContext(connection, user.USER_ID);
+      if (context) {
+        company = {
+          COMPANY_ID: context.COMPANY_ID,
+          COMPANY_NAME: context.COMPANY_NAME,
+        };
+        warehouse = {
+          WAREHOUSE_ID: context.WAREHOUSE_ID,
+          WAREHOUSE_CODE: context.WAREHOUSE_CODE,
+          WAREHOUSE_NAME: context.WAREHOUSE_NAME,
+          COMPANY_ID: context.COMPANY_ID,
+          COMPANY_NAME: context.COMPANY_NAME,
+        };
+      }
     }
 
     if (user.ROLE === "WAREHOUSE") {
       if (!company?.COMPANY_ID || !warehouse) {
         return res.status(400).json({
-          error: "company_name and warehouse are required for warehouse login",
+          error:
+            "warehouse account is missing company/warehouse assignment",
         });
       }
     }
@@ -145,7 +190,7 @@ async function login(req, res) {
     if (user.ROLE === "POS") {
       if (!warehouse) {
         return res.status(400).json({
-          error: "warehouse is required for POS login",
+          error: "POS account is missing warehouse assignment",
         });
       }
     }
@@ -191,7 +236,15 @@ async function login(req, res) {
 }
 
 async function register(req, res) {
-  const { username, email, password, full_name, role } = req.body || {};
+  const {
+    username,
+    email,
+    password,
+    full_name,
+    role,
+    company_name: companyNameRaw,
+    warehouse_name: warehouseNameRaw,
+  } = req.body || {};
   if (!username || !email || !password || !full_name || !role) {
     return res.status(400).json({ error: "missing required fields" });
   }
@@ -202,9 +255,35 @@ async function register(req, res) {
     return res.status(400).json({ error: "password too short" });
   }
 
+  const normalizedRole = role.trim().toUpperCase();
+  if (!["POS", "WAREHOUSE"].includes(normalizedRole)) {
+    return res.status(400).json({ error: "role must be POS or WAREHOUSE" });
+  }
+
+  const companyName = (companyNameRaw || "").trim();
+  const warehouseName = (warehouseNameRaw || "").trim();
+  if (!companyName || !warehouseName) {
+    return res
+      .status(400)
+      .json({ error: "company_name and warehouse_name are required" });
+  }
+
   let connection;
   try {
     connection = await getConnection();
+
+    const company = await fetchCompany(connection, companyName);
+    if (!company) {
+      return res.status(400).json({ error: "company not found" });
+    }
+
+    const warehouse = await fetchWarehouse(connection, {
+      warehouseName,
+      companyId: company.COMPANY_ID,
+    });
+    if (!warehouse) {
+      return res.status(400).json({ error: "warehouse not found" });
+    }
 
     const dup = await connection.execute(
       `
@@ -270,7 +349,29 @@ async function register(req, res) {
         email,
         password_hash,
         full_name,
-        role,
+        role: normalizedRole,
+      }
+    );
+
+    await connection.execute(
+      `
+        insert into user_warehouse_access (
+          user_id,
+          company_id,
+          warehouse_id,
+          created_at
+        )
+        values (
+          :user_id,
+          :company_id,
+          :warehouse_id,
+          systimestamp
+        )
+      `,
+      {
+        user_id: next_id,
+        company_id: company.COMPANY_ID,
+        warehouse_id: warehouse.WAREHOUSE_ID,
       }
     );
 
@@ -281,7 +382,11 @@ async function register(req, res) {
       username,
       email,
       full_name,
-      role,
+      role: normalizedRole,
+      company_id: company.COMPANY_ID,
+      company_name: company.COMPANY_NAME,
+      warehouse_id: warehouse.WAREHOUSE_ID,
+      warehouse_name: warehouse.WAREHOUSE_NAME,
     });
   } catch (err) {
     if (connection) {
