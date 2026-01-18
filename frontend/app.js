@@ -1,6 +1,15 @@
 (() => {
   const config = window.APP_CONFIG || {};
-  const apiBaseUrl = config.apiBaseUrl || "";
+  const normalizeApiBaseUrl = (baseUrl) => {
+    if (!baseUrl) {
+      return "";
+    }
+    if (window.location.protocol === "https:" && baseUrl.startsWith("http://")) {
+      return `https://${baseUrl.slice("http://".length)}`;
+    }
+    return baseUrl;
+  };
+  const apiBaseUrl = normalizeApiBaseUrl(config.apiBaseUrl || "");
 
   const getToken = () => localStorage.getItem("token");
   const getWarehouseContext = () => ({
