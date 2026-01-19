@@ -3,6 +3,186 @@ const jwt = require("jsonwebtoken");
 const oracledb = require("oracledb");
 const { getConnection } = require("../db");
 
+const useLocalAuth =
+  (process.env.local_auth || process.env.LOCAL_AUTH) === "1";
+const localStore = {
+  nextId: 1,
+  users: [],
+};
+const localDefaults = {
+  companyId: 1,
+  warehouseId: 1,
+  warehouseCode: "LOCAL",
+};
+
+const normalizeText = (value) =>
+  value === undefined || value === null ? "" : String(value).trim();
+
+const getJwtSecret = () =>
+  process.env.jwt_secret || process.env.JWT_SECRET;
+
+const buildLocalContext = (payload, user) => {
+  const companyName =
+    normalizeText(payload.company_name) ||
+    normalizeText(user.company_name) ||
+    "Local Company";
+  const warehouseName =
+    normalizeText(payload.warehouse_name) ||
+    normalizeText(user.warehouse_name) ||
+    "Local Warehouse";
+  const warehouseCode =
+    normalizeText(payload.warehouse_code) ||
+    normalizeText(user.warehouse_code) ||
+    localDefaults.warehouseCode;
+
+  return {
+    company_id: localDefaults.companyId,
+    company_name: companyName,
+    warehouse_id: localDefaults.warehouseId,
+    warehouse_code: warehouseCode,
+    warehouse_name: warehouseName,
+  };
+};
+
+function findLocalUser(identifier) {
+  const needle = normalizeText(identifier).toLowerCase();
+  if (!needle) {
+    return null;
+  }
+  return (
+    localStore.users.find(
+      (user) =>
+        user.username.toLowerCase() === needle ||
+        user.email.toLowerCase() === needle
+    ) || null
+  );
+}
+
+async function localLogin(req, res) {
+  const { identifier, password } = req.body || {};
+  if (!identifier || !password) {
+    return res.status(400).json({ error: "identifier and password required" });
+  }
+
+  const user = findLocalUser(identifier);
+  if (!user) {
+    return res.status(401).json({ error: "Invalid email or password" });
+  }
+
+  const ok = await bcrypt.compare(password, user.password_hash || "");
+  if (!ok) {
+    return res.status(401).json({ error: "Invalid email or password" });
+  }
+
+  const jwtSecret = getJwtSecret();
+  if (!jwtSecret) {
+    return res.status(500).json({ error: "jwt secret not configured" });
+  }
+
+  const context = buildLocalContext(req.body || {}, user);
+  const token = jwt.sign(
+    {
+      user_id: user.user_id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      company_id: context.company_id,
+      warehouse_id: context.warehouse_id,
+    },
+    jwtSecret,
+    { expiresIn: "7d" }
+  );
+
+  return res.status(200).json({
+    user_id: user.user_id,
+    username: user.username,
+    email: user.email,
+    full_name: user.full_name,
+    role: user.role,
+    company_id: context.company_id,
+    company_name: context.company_name,
+    warehouse_id: context.warehouse_id,
+    warehouse_code: context.warehouse_code,
+    warehouse_name: context.warehouse_name,
+    token,
+  });
+}
+
+async function localRegister(req, res) {
+  const {
+    username,
+    email,
+    password,
+    full_name,
+    role,
+    company_name: companyNameRaw,
+    warehouse_name: warehouseNameRaw,
+  } = req.body || {};
+  if (!username || !email || !password || !full_name || !role) {
+    return res.status(400).json({ error: "missing required fields" });
+  }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+    return res.status(400).json({ error: "invalid email" });
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: "password too short" });
+  }
+
+  const normalizedRole = role.trim().toUpperCase();
+  if (!["POS", "WAREHOUSE"].includes(normalizedRole)) {
+    return res.status(400).json({ error: "role must be POS or WAREHOUSE" });
+  }
+
+  const companyName = normalizeText(companyNameRaw);
+  const warehouseName = normalizeText(warehouseNameRaw);
+  if (!companyName || !warehouseName) {
+    return res
+      .status(400)
+      .json({ error: "company_name and warehouse_name are required" });
+  }
+
+  const usernameLower = normalizeText(username).toLowerCase();
+  const emailLower = normalizeText(email).toLowerCase();
+  const dup = localStore.users.some(
+    (user) =>
+      user.username.toLowerCase() === usernameLower ||
+      user.email.toLowerCase() === emailLower
+  );
+  if (dup) {
+    return res.status(409).json({ error: "user already exists" });
+  }
+
+  const password_hash = await bcrypt.hash(password, 10);
+  const user = {
+    user_id: localStore.nextId++,
+    username: normalizeText(username),
+    email: normalizeText(email),
+    full_name: normalizeText(full_name),
+    role: normalizedRole,
+    password_hash,
+    company_name: companyName,
+    warehouse_name: warehouseName,
+  };
+  localStore.users.push(user);
+
+  const context = buildLocalContext(
+    { company_name: companyName, warehouse_name: warehouseName },
+    user
+  );
+
+  return res.status(201).json({
+    user_id: user.user_id,
+    username: user.username,
+    email: user.email,
+    full_name: user.full_name,
+    role: user.role,
+    company_id: context.company_id,
+    company_name: context.company_name,
+    warehouse_id: context.warehouse_id,
+    warehouse_name: context.warehouse_name,
+  });
+}
+
 async function fetchCompany(connection, companyName) {
   if (!companyName) {
     return null;
@@ -85,6 +265,10 @@ async function fetchUserContext(connection, userId) {
 }
 
 async function login(req, res) {
+  if (useLocalAuth) {
+    return localLogin(req, res);
+  }
+
   const {
     identifier,
     password,
@@ -134,7 +318,7 @@ async function login(req, res) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    const jwt_secret = process.env.jwt_secret || process.env.JWT_SECRET;
+    const jwt_secret = getJwtSecret();
     if (!jwt_secret) {
       return res.status(500).json({ error: "jwt secret not configured" });
     }
@@ -236,6 +420,10 @@ async function login(req, res) {
 }
 
 async function register(req, res) {
+  if (useLocalAuth) {
+    return localRegister(req, res);
+  }
+
   const {
     username,
     email,

@@ -22,6 +22,8 @@ if (process.env.tns_admin) {
 }
 
 const port = process.env.port || 3001;
+const useLocalAuth =
+  (process.env.local_auth || process.env.LOCAL_AUTH) === "1";
 
 app.use(cors());
 app.use(express.json());
@@ -66,7 +68,9 @@ app.use((err, req, res, next) => {
 
 async function start() {
   try {
-    await initPool();
+    if (!useLocalAuth) {
+      await initPool();
+    }
     app.listen(port, () => {
       console.log(`Server running on port ${port}`);
     });
