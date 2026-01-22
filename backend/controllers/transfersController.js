@@ -1,5 +1,6 @@
 const oracledb = require("oracledb");
 const { getConnection } = require("../db");
+const { useLocalData, localData } = require("../localData");
 
 function normalizeItems(items) {
   if (!Array.isArray(items) || items.length === 0) {
@@ -28,6 +29,17 @@ async function listTransfers(req, res) {
     Number(req.user.warehouse_id) !== Number(warehouseId)
   ) {
     return res.status(403).json({ error: "warehouse scope mismatch" });
+  }
+
+  if (useLocalData) {
+    const numericId = warehouseId ? Number(warehouseId) : null;
+    return res.json({
+      transfers: localData.listTransfers({
+        status,
+        direction,
+        warehouseId: Number.isFinite(numericId) ? numericId : null,
+      }),
+    });
   }
 
   let connection;
@@ -178,6 +190,22 @@ async function createTransfer(req, res) {
     return res.status(403).json({ error: "warehouse scope mismatch" });
   }
 
+  if (useLocalData) {
+    try {
+      const created = localData.createTransfer({
+        from_warehouse_id: fromWarehouseId,
+        to_warehouse_id: toWarehouseId,
+        notes: notes || null,
+        transfer_number: transferNumberRaw || null,
+        requested_by: req.user?.user_id || null,
+        items,
+      });
+      return res.status(201).json({ transfer_id: created.transfer_id });
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+  }
+
   let connection;
   try {
     connection = await getConnection();
@@ -304,6 +332,21 @@ async function approveTransfer(req, res) {
   const transferId = Number(req.params.id);
   if (!Number.isFinite(transferId)) {
     return res.status(400).json({ error: "invalid transfer id" });
+  }
+
+  if (useLocalData) {
+    try {
+      const updated = localData.approveTransfer(
+        transferId,
+        req.user?.user_id || null
+      );
+      if (!updated) {
+        return res.status(404).json({ error: "transfer not found" });
+      }
+      return res.json({ transfer_id: transferId, status: "COMPLETED" });
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
   }
 
   let connection;
@@ -452,6 +495,17 @@ async function rejectTransfer(req, res) {
   const transferId = Number(req.params.id);
   if (!Number.isFinite(transferId)) {
     return res.status(400).json({ error: "invalid transfer id" });
+  }
+
+  if (useLocalData) {
+    const updated = localData.rejectTransfer(
+      transferId,
+      req.user?.user_id || null
+    );
+    if (!updated) {
+      return res.status(404).json({ error: "transfer not found or not pending" });
+    }
+    return res.json({ transfer_id: transferId, status: "REJECTED" });
   }
 
   let connection;

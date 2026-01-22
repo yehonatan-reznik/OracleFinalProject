@@ -1,8 +1,13 @@
 const oracledb = require("oracledb");
 const { getConnection } = require("../db");
+const { useLocalData, localData } = require("../localData");
 
 async function listWarehouses(req, res) {
   const companyId = req.query.company_id ? Number(req.query.company_id) : null;
+  if (useLocalData) {
+    return res.json({ warehouses: localData.listWarehouses(companyId) });
+  }
+
   let connection;
   try {
     connection = await getConnection();
@@ -55,6 +60,15 @@ async function createWarehouse(req, res) {
     return res.status(400).json({
       error: "warehouse_code, warehouse_name, and company_id are required",
     });
+  }
+
+  if (useLocalData) {
+    try {
+      const warehouseId = localData.createWarehouse(req.body || {});
+      return res.status(201).json({ warehouse_id: warehouseId });
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
   }
 
   let connection;
@@ -139,6 +153,18 @@ async function updateWarehouse(req, res) {
     });
   }
 
+  if (useLocalData) {
+    try {
+      const updated = localData.updateWarehouse(warehouseId, req.body || {});
+      if (!updated) {
+        return res.status(404).json({ error: "warehouse not found" });
+      }
+      return res.json({ warehouse_id: warehouseId });
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+  }
+
   let connection;
   try {
     connection = await getConnection();
@@ -192,6 +218,14 @@ async function deleteWarehouse(req, res) {
   const warehouseId = Number(req.params.id);
   if (!Number.isFinite(warehouseId)) {
     return res.status(400).json({ error: "invalid warehouse id" });
+  }
+
+  if (useLocalData) {
+    const deleted = localData.deleteWarehouse(warehouseId);
+    if (!deleted) {
+      return res.status(404).json({ error: "warehouse not found" });
+    }
+    return res.json({ warehouse_id: warehouseId });
   }
 
   let connection;

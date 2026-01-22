@@ -1,5 +1,6 @@
 const oracledb = require("oracledb");
 const { getConnection } = require("../db");
+const { useLocalData, localData } = require("../localData");
 
 async function listReceipts(req, res) {
   const warehouseId = req.query.warehouse_id || req.user?.warehouse_id;
@@ -11,6 +12,12 @@ async function listReceipts(req, res) {
     Number(req.user.warehouse_id) !== Number(warehouseId)
   ) {
     return res.status(403).json({ error: "warehouse scope mismatch" });
+  }
+
+  if (useLocalData) {
+    return res.json({
+      receipts: localData.listReceipts(Number(warehouseId)),
+    });
   }
 
   let connection;

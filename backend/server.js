@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const { initPool, closePool, query } = require("./db");
 const { authenticate } = require("./middleware/auth");
+const { useLocalData, localData } = require("./localData");
 
 const authRoutes = require("./routes/auth");
 const productRoutes = require("./routes/products");
@@ -21,18 +22,29 @@ if (process.env.tns_admin) {
   process.env.TNS_ADMIN = process.env.tns_admin;
 }
 
-const port = process.env.port || 3001;
+const port = process.env.PORT || process.env.port || 3001;
 const useLocalAuth =
   (process.env.local_auth || process.env.LOCAL_AUTH) === "1";
 
 app.use(cors());
 app.use(express.json());
 
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
+});
+
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok" });
+});
+
 app.get("/", (req, res) => {
   res.json({ status: "ok" });
 });
 
 app.get("/api/db-test", authenticate, async (req, res) => {
+  if (useLocalData) {
+    return res.json({ user: "local-demo" });
+  }
   try {
     const result = await query("select user from dual");
     const row = result.rows[0];
@@ -47,6 +59,34 @@ app.get("/api/db-test", authenticate, async (req, res) => {
       offset: err.offset,
     });
   }
+});
+
+app.get("/items", (req, res) => {
+  if (useLocalData) {
+    const warehouseId = req.query.warehouse_id
+      ? Number(req.query.warehouse_id)
+      : null;
+    if (Number.isFinite(warehouseId)) {
+      return res.json({ items: localData.listInventory(warehouseId) });
+    }
+    return res.json({ items: localData.listProducts() });
+  }
+  res.status(501).json({ error: "items route is only available in local demo" });
+});
+
+app.get("/items/:id", (req, res) => {
+  if (useLocalData) {
+    const productId = Number(req.params.id);
+    if (!Number.isFinite(productId)) {
+      return res.status(400).json({ error: "invalid item id" });
+    }
+    const product = localData.getProduct(productId);
+    if (!product) {
+      return res.status(404).json({ error: "item not found" });
+    }
+    return res.json({ item: product });
+  }
+  res.status(501).json({ error: "items route is only available in local demo" });
 });
 
 app.use("/api/auth", authRoutes);
@@ -68,7 +108,7 @@ app.use((err, req, res, next) => {
 
 async function start() {
   try {
-    if (!useLocalAuth) {
+    if (!useLocalAuth && !useLocalData) {
       await initPool();
     }
     app.listen(port, () => {

@@ -1,5 +1,6 @@
 const oracledb = require("oracledb");
 const { getConnection } = require("../db");
+const { useLocalData, localData } = require("../localData");
 
 function toNumber(value, fallback) {
   const num = Number(value);
@@ -93,6 +94,28 @@ async function createSale(req, res) {
     totalAmountRaw !== undefined
       ? toNumber(totalAmountRaw, 0)
       : normalizedItems.reduce((sum, item) => sum + item.line_total, 0);
+
+  if (useLocalData) {
+    try {
+      const sale = localData.createSale({
+        sale_number: saleNumber,
+        customer_id: customerId,
+        cashier_id: cashierId,
+        warehouse_id: numericWarehouseId,
+        gross_amount: grossAmount,
+        discount_amount: discountAmount,
+        tax_amount: taxAmount,
+        total_amount: totalAmount,
+        payment_status: paymentStatus || "UNPAID",
+        status: status || "COMPLETED",
+        notes: notes || null,
+        items: normalizedItems,
+      });
+      return res.status(201).json({ sale_id: sale.sale_id });
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+  }
 
   let connection;
   try {

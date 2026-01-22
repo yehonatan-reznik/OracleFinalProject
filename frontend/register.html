@@ -147,6 +147,19 @@
     const form = document.getElementById('registerForm');
     const status = document.getElementById('status');
 
+    const persistSession = (data, payload) => {
+      const user = data.user || data;
+      localStorage.setItem('user_id', user.user_id || '');
+      localStorage.setItem('email', user.email || payload.email || '');
+      localStorage.setItem('role', user.role || payload.role || '');
+      localStorage.setItem('token', data.token || '');
+      localStorage.setItem('company_id', data.company_id || user.company_id || '');
+      localStorage.setItem('company_name', data.company_name || user.company_name || payload.company_name || '');
+      localStorage.setItem('warehouse_id', data.warehouse_id || user.warehouse_id || '');
+      localStorage.setItem('warehouse_name', data.warehouse_name || user.warehouse_name || payload.warehouse_name || '');
+      return user.role || payload.role || '';
+    };
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       status.style.display = 'none';
@@ -168,10 +181,27 @@
           body: JSON.stringify(payload)
         });
 
-        status.textContent = 'Registration successful. Please log in.';
+        status.textContent = 'Registration successful. Signing you in...';
         status.classList.add('ok');
         status.style.display = 'block';
-        form.reset();
+
+        const loginPayload = {
+          identifier: payload.email,
+          password: payload.password,
+          company_name: payload.company_name,
+          warehouse_name: payload.warehouse_name
+        };
+        const data = await App.apiFetch('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify(loginPayload)
+        });
+
+        const role = persistSession(data, payload);
+        if (role === 'WAREHOUSE') {
+          window.location.href = 'warehouse-dashboard.html';
+        } else {
+          window.location.href = 'pos-sales.html';
+        }
       } catch (err) {
         status.textContent = err.message || 'Registration failed';
         status.style.display = 'block';

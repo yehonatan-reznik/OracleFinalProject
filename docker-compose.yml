@@ -1,0 +1,19 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: "3001"
+      LOCAL_AUTH: "1"
+      LOCAL_DATA: "1"
+      LOCAL_DEMO: "1"
+      JWT_SECRET: "local-demo-secret"
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend

@@ -2,9 +2,22 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const oracledb = require("oracledb");
 const { getConnection } = require("../db");
+const { useLocalData, localData } = require("../localData");
+
+const isTruthy = (value) => {
+  if (value === undefined || value === null) {
+    return false;
+  }
+  const normalized = String(value).trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes";
+};
 
 const useLocalAuth =
-  (process.env.local_auth || process.env.LOCAL_AUTH) === "1";
+  isTruthy(process.env.local_auth) || isTruthy(process.env.LOCAL_AUTH);
+const seedLocalAuth =
+  isTruthy(process.env.local_auth_seed) ||
+  isTruthy(process.env.LOCAL_AUTH_SEED) ||
+  isTruthy(process.env.LOCAL_DEMO);
 const localStore = {
   nextId: 1,
   users: [],
@@ -22,27 +35,113 @@ const getJwtSecret = () =>
   process.env.jwt_secret || process.env.JWT_SECRET;
 
 const buildLocalContext = (payload, user) => {
-  const companyName =
-    normalizeText(payload.company_name) ||
-    normalizeText(user.company_name) ||
-    "Local Company";
-  const warehouseName =
-    normalizeText(payload.warehouse_name) ||
-    normalizeText(user.warehouse_name) ||
-    "Local Warehouse";
-  const warehouseCode =
+  const companyNameInput =
+    normalizeText(payload.company_name) || normalizeText(user.company_name);
+  const warehouseNameInput =
+    normalizeText(payload.warehouse_name) || normalizeText(user.warehouse_name);
+  const warehouseCodeInput =
     normalizeText(payload.warehouse_code) ||
     normalizeText(user.warehouse_code) ||
     localDefaults.warehouseCode;
 
+  let companyId = localDefaults.companyId;
+  let warehouseId = localDefaults.warehouseId;
+  let companyName = companyNameInput || "Local Company";
+  let warehouseName = warehouseNameInput || "Local Warehouse";
+  let warehouseCode = warehouseCodeInput;
+
+  if (useLocalData) {
+    const matchedCompany = companyNameInput
+      ? localData.findCompanyByName(companyNameInput)
+      : null;
+    if (matchedCompany) {
+      companyId = matchedCompany.company_id;
+      companyName = matchedCompany.company_name;
+    } else if (!companyNameInput) {
+      const fallbackCompany = localData.listCompanies()[0];
+      if (fallbackCompany) {
+        companyId = fallbackCompany.company_id;
+        companyName = fallbackCompany.company_name;
+      }
+    }
+
+    let matchedWarehouse = null;
+    if (warehouseNameInput) {
+      matchedWarehouse = localData.findWarehouseByName(
+        warehouseNameInput,
+        companyId
+      );
+    }
+    if (!matchedWarehouse && warehouseCodeInput) {
+      matchedWarehouse = localData.findWarehouseByCode(warehouseCodeInput);
+    }
+    if (!matchedWarehouse) {
+      const companyWarehouses = localData.listWarehouses(companyId);
+      matchedWarehouse = companyWarehouses[0] || null;
+    }
+    if (matchedWarehouse) {
+      warehouseId = matchedWarehouse.warehouse_id;
+      warehouseName = matchedWarehouse.warehouse_name;
+      warehouseCode = matchedWarehouse.warehouse_code || warehouseCode;
+      companyId = matchedWarehouse.company_id || companyId;
+      if (!companyNameInput) {
+        const fallbackCompany = localData
+          .listCompanies()
+          .find((company) => company.company_id === companyId);
+        if (fallbackCompany) {
+          companyName = fallbackCompany.company_name;
+        }
+      }
+    }
+  }
+
   return {
-    company_id: localDefaults.companyId,
+    company_id: companyId,
     company_name: companyName,
-    warehouse_id: localDefaults.warehouseId,
+    warehouse_id: warehouseId,
     warehouse_code: warehouseCode,
     warehouse_name: warehouseName,
   };
 };
+
+let localSeeded = false;
+const seedLocalUsers = () => {
+  if (!useLocalAuth || !seedLocalAuth || localSeeded) {
+    return;
+  }
+  if (localStore.users.length) {
+    localSeeded = true;
+    return;
+  }
+
+  const passwordHash = bcrypt.hashSync("demo123", 10);
+  localStore.users.push(
+    {
+      user_id: localStore.nextId++,
+      username: "pos_demo",
+      email: "pos@acme.test",
+      full_name: "POS Demo User",
+      role: "POS",
+      password_hash: passwordHash,
+      company_name: "Acme Foods",
+      warehouse_name: "Acme Central",
+    },
+    {
+      user_id: localStore.nextId++,
+      username: "wh_demo",
+      email: "warehouse@acme.test",
+      full_name: "Warehouse Demo User",
+      role: "WAREHOUSE",
+      password_hash: passwordHash,
+      company_name: "Acme Foods",
+      warehouse_name: "Acme Central",
+    }
+  );
+
+  localSeeded = true;
+};
+
+seedLocalUsers();
 
 function findLocalUser(identifier) {
   const needle = normalizeText(identifier).toLowerCase();

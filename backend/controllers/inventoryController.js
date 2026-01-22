@@ -1,5 +1,6 @@
 const oracledb = require("oracledb");
 const { getConnection } = require("../db");
+const { useLocalData, localData } = require("../localData");
 
 function resolveWarehouseId(req, res) {
   const warehouseId =
@@ -26,6 +27,10 @@ async function listInventory(req, res) {
   const warehouseId = resolveWarehouseId(req, res);
   if (!warehouseId) {
     return;
+  }
+
+  if (useLocalData) {
+    return res.json({ items: localData.listInventory(warehouseId) });
   }
 
   let connection;
@@ -74,6 +79,12 @@ async function getInventoryItem(req, res) {
   const productId = Number(req.params.productId);
   if (!Number.isFinite(productId)) {
     return res.status(400).json({ error: "invalid product id" });
+  }
+
+  if (useLocalData) {
+    return res.json({
+      inventory: localData.getInventoryItem(warehouseId, productId),
+    });
   }
 
   let connection;
@@ -131,6 +142,21 @@ async function receiveStock(req, res) {
     : new Date();
   if (!Number.isFinite(productId) || !Number.isFinite(quantity) || quantity <= 0) {
     return res.status(400).json({ error: "product_id and quantity are required" });
+  }
+
+  if (useLocalData) {
+    try {
+      localData.receiveStock({
+        warehouseId,
+        productId,
+        quantity,
+        supplierId,
+        userId: req.user?.user_id || null,
+      });
+      return res.json({ warehouse_id: warehouseId, product_id: productId });
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
   }
 
   let connection;
@@ -247,6 +273,19 @@ async function adjustStock(req, res) {
     return res
       .status(400)
       .json({ error: "product_id and quantity_on_hand are required" });
+  }
+
+  if (useLocalData) {
+    try {
+      localData.adjustStock({
+        warehouseId,
+        productId,
+        quantity: newQuantity,
+      });
+      return res.json({ warehouse_id: warehouseId, product_id: productId });
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
   }
 
   let connection;

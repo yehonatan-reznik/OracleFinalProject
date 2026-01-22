@@ -1,7 +1,12 @@
 const oracledb = require("oracledb");
 const { getConnection } = require("../db");
+const { useLocalData, localData } = require("../localData");
 
 async function listSuppliers(req, res) {
+  if (useLocalData) {
+    return res.json({ suppliers: localData.listSuppliers() });
+  }
+
   let connection;
   try {
     connection = await getConnection();
@@ -52,6 +57,15 @@ async function createSupplier(req, res) {
 
   if (!supplierName) {
     return res.status(400).json({ error: "supplier_name is required" });
+  }
+
+  if (useLocalData) {
+    try {
+      const supplierId = localData.createSupplier(req.body || {});
+      return res.status(201).json({ supplier_id: supplierId });
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
   }
 
   let connection;
@@ -138,6 +152,18 @@ async function updateSupplier(req, res) {
     return res.status(400).json({ error: "supplier_name is required" });
   }
 
+  if (useLocalData) {
+    try {
+      const updated = localData.updateSupplier(supplierId, req.body || {});
+      if (!updated) {
+        return res.status(404).json({ error: "supplier not found" });
+      }
+      return res.json({ supplier_id: supplierId });
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+  }
+
   let connection;
   try {
     connection = await getConnection();
@@ -193,6 +219,14 @@ async function deleteSupplier(req, res) {
   const supplierId = Number(req.params.id);
   if (!Number.isFinite(supplierId)) {
     return res.status(400).json({ error: "invalid supplier id" });
+  }
+
+  if (useLocalData) {
+    const deleted = localData.deleteSupplier(supplierId);
+    if (!deleted) {
+      return res.status(404).json({ error: "supplier not found" });
+    }
+    return res.json({ supplier_id: supplierId });
   }
 
   let connection;

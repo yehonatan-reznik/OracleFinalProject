@@ -1,0 +1,7 @@
+node_modules
+wallet
+.env
+*.pem
+*.p12
+*.sso
+*.jks

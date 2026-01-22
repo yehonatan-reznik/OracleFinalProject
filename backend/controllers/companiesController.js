@@ -1,7 +1,12 @@
 const oracledb = require("oracledb");
 const { getConnection } = require("../db");
+const { useLocalData, localData } = require("../localData");
 
 async function listCompanies(req, res) {
+  if (useLocalData) {
+    return res.json({ companies: localData.listCompanies() });
+  }
+
   let connection;
   try {
     connection = await getConnection();
@@ -49,6 +54,15 @@ async function createCompany(req, res) {
 
   if (!companyName) {
     return res.status(400).json({ error: "company_name is required" });
+  }
+
+  if (useLocalData) {
+    try {
+      const companyId = localData.createCompany(req.body || {});
+      return res.status(201).json({ company_id: companyId });
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
   }
 
   let connection;
@@ -128,6 +142,18 @@ async function updateCompany(req, res) {
     return res.status(400).json({ error: "company_name is required" });
   }
 
+  if (useLocalData) {
+    try {
+      const updated = localData.updateCompany(companyId, req.body || {});
+      if (!updated) {
+        return res.status(404).json({ error: "company not found" });
+      }
+      return res.json({ company_id: companyId });
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+  }
+
   let connection;
   try {
     connection = await getConnection();
@@ -179,6 +205,14 @@ async function deleteCompany(req, res) {
   const companyId = Number(req.params.id);
   if (!Number.isFinite(companyId)) {
     return res.status(400).json({ error: "invalid company id" });
+  }
+
+  if (useLocalData) {
+    const deleted = localData.deleteCompany(companyId);
+    if (!deleted) {
+      return res.status(404).json({ error: "company not found" });
+    }
+    return res.json({ company_id: companyId });
   }
 
   let connection;

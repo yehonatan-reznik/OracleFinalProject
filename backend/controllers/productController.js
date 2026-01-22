@@ -1,7 +1,12 @@
 const oracledb = require("oracledb");
 const { getConnection } = require("../db");
+const { useLocalData, localData } = require("../localData");
 
 async function getProducts(req, res) {
+  if (useLocalData) {
+    return res.json({ products: localData.listProducts() });
+  }
+
   let connection;
   try {
     connection = await getConnection();
@@ -60,6 +65,15 @@ async function createProduct(req, res) {
     return res.status(400).json({
       error: "product_code, product_name, and unit_price are required",
     });
+  }
+
+  if (useLocalData) {
+    try {
+      const productId = localData.createProduct(req.body || {});
+      return res.status(201).json({ product_id: productId });
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
   }
 
   let connection;
@@ -157,6 +171,18 @@ async function updateProduct(req, res) {
     });
   }
 
+  if (useLocalData) {
+    try {
+      const updated = localData.updateProduct(productId, req.body || {});
+      if (!updated) {
+        return res.status(404).json({ error: "product not found" });
+      }
+      return res.json({ product_id: productId });
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+  }
+
   let connection;
   try {
     connection = await getConnection();
@@ -217,6 +243,14 @@ async function deleteProduct(req, res) {
   const productId = Number(req.params.id);
   if (!Number.isFinite(productId)) {
     return res.status(400).json({ error: "invalid product id" });
+  }
+
+  if (useLocalData) {
+    const deleted = localData.deleteProduct(productId);
+    if (!deleted) {
+      return res.status(404).json({ error: "product not found" });
+    }
+    return res.json({ product_id: productId });
   }
 
   let connection;

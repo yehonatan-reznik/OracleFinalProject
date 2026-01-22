@@ -1,5 +1,6 @@
 const oracledb = require("oracledb");
 const { getConnection } = require("../db");
+const { useLocalData, localData } = require("../localData");
 
 function normalizeItems(items) {
   if (!Array.isArray(items) || items.length === 0) {
@@ -34,6 +35,12 @@ async function listReturns(req, res) {
     Number(req.user.warehouse_id) !== Number(warehouseId)
   ) {
     return res.status(403).json({ error: "warehouse scope mismatch" });
+  }
+  if (useLocalData) {
+    const numericId = warehouseId ? Number(warehouseId) : null;
+    return res.json({
+      returns: localData.listReturns(Number.isFinite(numericId) ? numericId : null),
+    });
   }
   let connection;
   try {
@@ -90,6 +97,23 @@ async function createReturn(req, res) {
 
   if (req.user?.warehouse_id && Number(req.user.warehouse_id) !== warehouseId) {
     return res.status(403).json({ error: "warehouse scope mismatch" });
+  }
+
+  if (useLocalData) {
+    try {
+      const created = localData.createReturn({
+        return_number: null,
+        sale_id: saleIdRaw ? Number(saleIdRaw) : null,
+        warehouse_id: warehouseId,
+        cashier_id: req.user?.user_id || null,
+        reason: reason || null,
+        status: "COMPLETED",
+        items,
+      });
+      return res.status(201).json({ return_id: created.return_id });
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
   }
 
   let connection;

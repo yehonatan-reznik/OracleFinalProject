@@ -1,0 +1,197 @@
+{
+  "companies": [
+    {
+      "company_id": 1,
+      "company_code": "ACME",
+      "company_name": "Acme Foods",
+      "address": "101 Market St",
+      "city": "Springfield",
+      "country": "USA",
+      "is_active": "Y"
+    },
+    {
+      "company_id": 2,
+      "company_code": "NWND",
+      "company_name": "Northwind Market",
+      "address": "77 Harbor Ave",
+      "city": "Lakeside",
+      "country": "USA",
+      "is_active": "Y"
+    }
+  ],
+  "warehouses": [
+    {
+      "warehouse_id": 1,
+      "warehouse_code": "AC-CEN",
+      "warehouse_name": "Acme Central",
+      "company_id": 1,
+      "address": "1200 Central Ave",
+      "city": "Springfield",
+      "country": "USA",
+      "is_active": "Y"
+    },
+    {
+      "warehouse_id": 2,
+      "warehouse_code": "AC-E",
+      "warehouse_name": "Acme East",
+      "company_id": 1,
+      "address": "240 East Blvd",
+      "city": "Springfield",
+      "country": "USA",
+      "is_active": "Y"
+    },
+    {
+      "warehouse_id": 3,
+      "warehouse_code": "NW-HUB",
+      "warehouse_name": "Northwind Hub",
+      "company_id": 2,
+      "address": "900 Dock Rd",
+      "city": "Lakeside",
+      "country": "USA",
+      "is_active": "Y"
+    },
+    {
+      "warehouse_id": 4,
+      "warehouse_code": "NW-W",
+      "warehouse_name": "Northwind West",
+      "company_id": 2,
+      "address": "55 West Pkwy",
+      "city": "Lakeside",
+      "country": "USA",
+      "is_active": "Y"
+    }
+  ],
+  "products": [
+    {
+      "product_id": 101,
+      "product_code": "COF-1KG",
+      "product_name": "Coffee Beans 1kg",
+      "barcode": "111000111000",
+      "category_id": 1,
+      "description": "Medium roast coffee beans",
+      "unit_of_measure": "BAG",
+      "unit_price": 15.5,
+      "cost_price": 9.2,
+      "tax_rate": 0.08,
+      "is_active": "Y"
+    },
+    {
+      "product_id": 102,
+      "product_code": "TEA-500",
+      "product_name": "Green Tea 500g",
+      "barcode": "111000111001",
+      "category_id": 1,
+      "description": "Loose leaf green tea",
+      "unit_of_measure": "BAG",
+      "unit_price": 8.9,
+      "cost_price": 5.1,
+      "tax_rate": 0.08,
+      "is_active": "Y"
+    },
+    {
+      "product_id": 103,
+      "product_code": "OIL-1L",
+      "product_name": "Olive Oil 1L",
+      "barcode": "111000111002",
+      "category_id": 2,
+      "description": "Extra virgin olive oil",
+      "unit_of_measure": "BOTTLE",
+      "unit_price": 12.5,
+      "cost_price": 7.3,
+      "tax_rate": 0.08,
+      "is_active": "Y"
+    },
+    {
+      "product_id": 104,
+      "product_code": "PAS-1KG",
+      "product_name": "Pasta 1kg",
+      "barcode": "111000111003",
+      "category_id": 2,
+      "description": "Durum wheat pasta",
+      "unit_of_measure": "BAG",
+      "unit_price": 4.2,
+      "cost_price": 2.1,
+      "tax_rate": 0.08,
+      "is_active": "Y"
+    },
+    {
+      "product_id": 105,
+      "product_code": "TOM-500",
+      "product_name": "Tomato Sauce 500ml",
+      "barcode": "111000111004",
+      "category_id": 2,
+      "description": "Classic tomato sauce",
+      "unit_of_measure": "BOTTLE",
+      "unit_price": 3.5,
+      "cost_price": 1.7,
+      "tax_rate": 0.08,
+      "is_active": "Y"
+    },
+    {
+      "product_id": 106,
+      "product_code": "CHO-100",
+      "product_name": "Dark Chocolate 100g",
+      "barcode": "111000111005",
+      "category_id": 3,
+      "description": "70 percent cocoa bar",
+      "unit_of_measure": "BAR",
+      "unit_price": 2.9,
+      "cost_price": 1.3,
+      "tax_rate": 0.08,
+      "is_active": "Y"
+    }
+  ],
+  "inventory": [
+    { "warehouse_id": 1, "product_id": 101, "quantity_on_hand": 40, "quantity_reserved": 0 },
+    { "warehouse_id": 1, "product_id": 102, "quantity_on_hand": 8, "quantity_reserved": 0 },
+    { "warehouse_id": 1, "product_id": 103, "quantity_on_hand": 15, "quantity_reserved": 0 },
+    { "warehouse_id": 1, "product_id": 104, "quantity_on_hand": 3, "quantity_reserved": 0 },
+    { "warehouse_id": 1, "product_id": 105, "quantity_on_hand": 20, "quantity_reserved": 0 },
+    { "warehouse_id": 1, "product_id": 106, "quantity_on_hand": 12, "quantity_reserved": 0 },
+
+    { "warehouse_id": 2, "product_id": 101, "quantity_on_hand": 12, "quantity_reserved": 0 },
+    { "warehouse_id": 2, "product_id": 102, "quantity_on_hand": 25, "quantity_reserved": 0 },
+    { "warehouse_id": 2, "product_id": 103, "quantity_on_hand": 6, "quantity_reserved": 0 },
+    { "warehouse_id": 2, "product_id": 104, "quantity_on_hand": 18, "quantity_reserved": 0 },
+    { "warehouse_id": 2, "product_id": 105, "quantity_on_hand": 9, "quantity_reserved": 0 },
+    { "warehouse_id": 2, "product_id": 106, "quantity_on_hand": 5, "quantity_reserved": 0 },
+
+    { "warehouse_id": 3, "product_id": 101, "quantity_on_hand": 30, "quantity_reserved": 0 },
+    { "warehouse_id": 3, "product_id": 102, "quantity_on_hand": 10, "quantity_reserved": 0 },
+    { "warehouse_id": 3, "product_id": 103, "quantity_on_hand": 22, "quantity_reserved": 0 },
+    { "warehouse_id": 3, "product_id": 104, "quantity_on_hand": 16, "quantity_reserved": 0 },
+    { "warehouse_id": 3, "product_id": 105, "quantity_on_hand": 14, "quantity_reserved": 0 },
+    { "warehouse_id": 3, "product_id": 106, "quantity_on_hand": 2, "quantity_reserved": 0 },
+
+    { "warehouse_id": 4, "product_id": 101, "quantity_on_hand": 5, "quantity_reserved": 0 },
+    { "warehouse_id": 4, "product_id": 102, "quantity_on_hand": 7, "quantity_reserved": 0 },
+    { "warehouse_id": 4, "product_id": 103, "quantity_on_hand": 9, "quantity_reserved": 0 },
+    { "warehouse_id": 4, "product_id": 104, "quantity_on_hand": 11, "quantity_reserved": 0 },
+    { "warehouse_id": 4, "product_id": 105, "quantity_on_hand": 12, "quantity_reserved": 0 },
+    { "warehouse_id": 4, "product_id": 106, "quantity_on_hand": 8, "quantity_reserved": 0 }
+  ],
+  "suppliers": [
+    {
+      "supplier_id": 1,
+      "supplier_code": "SUP-COF",
+      "supplier_name": "Roasters United",
+      "contact_name": "Sam Beans",
+      "phone_number": "555-0101",
+      "email": "sales@roasters.test",
+      "tax_id": "TAX-1001",
+      "address": "88 Bean Rd",
+      "is_active": "Y"
+    },
+    {
+      "supplier_id": 2,
+      "supplier_code": "SUP-GRN",
+      "supplier_name": "Green Harvest",
+      "contact_name": "Lina Leaf",
+      "phone_number": "555-0110",
+      "email": "orders@greenharvest.test",
+      "tax_id": "TAX-1002",
+      "address": "12 Orchard Lane",
+      "is_active": "Y"
+    }
+  ]
+}
